@@ -1,0 +1,629 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Brand Visual Identity System",
+  "description": "Defines the complete visual identity system for generating consistent ads across any platform or format. This schema ensures brand consistency while allowing flexibility for different industries and use cases.",
+  "type": "object",
+  "properties": {
+    "brandName": {
+      "description": "The brand or company name for reference",
+      "type": "string",
+      "examples": ["Nike", "Ability Connect WA", "CloudFlow Software"]
+    },
+    "colorPalette": {
+      "description": "Complete color system for brand consistency",
+      "type": "object",
+      "properties": {
+        "primary": {
+          "description": "Main brand color - used for CTAs, headlines, and primary elements",
+          "type": "object",
+          "properties": {
+            "hex": {
+              "type": "string",
+              "pattern": "^#[0-9A-Fa-f]{6}$",
+              "examples": ["#FF6B00", "#2C3E50", "#8B5CF6"]
+            },
+            "name": {
+              "type": "string",
+              "description": "Human-readable color name for reference",
+              "examples": ["Electric Orange", "Midnight Blue", "Royal Purple"]
+            },
+            "usage": {
+              "type": "string",
+              "description": "When to use this color",
+              "examples": ["CTA buttons, main headlines", "Primary actions and links"]
+            }
+          },
+          "required": ["hex"]
+        },
+        "secondary": {
+          "description": "Supporting brand color - used for accents and secondary elements",
+          "type": "object",
+          "properties": {
+            "hex": {
+              "type": "string",
+              "pattern": "^#[0-9A-Fa-f]{6}$"
+            },
+            "name": {
+              "type": "string"
+            },
+            "usage": {
+              "type": "string",
+              "examples": ["Subheadings, borders, icons"]
+            }
+          },
+          "required": ["hex"]
+        },
+        "neutral": {
+          "description": "Neutral colors for text and backgrounds",
+          "type": "object",
+          "properties": {
+            "dark": {
+              "type": "string",
+              "pattern": "^#[0-9A-Fa-f]{6}$",
+              "description": "Dark neutral for primary text",
+              "default": "#1A1A1A"
+            },
+            "light": {
+              "type": "string",
+              "pattern": "^#[0-9A-Fa-f]{6}$",
+              "description": "Light neutral for backgrounds",
+              "default": "#FFFFFF"
+            },
+            "mid": {
+              "type": "string",
+              "pattern": "^#[0-9A-Fa-f]{6}$",
+              "description": "Mid-tone for secondary text",
+              "default": "#6B7280"
+            }
+          },
+          "required": ["dark", "light"]
+        },
+        "accent": {
+          "description": "Optional accent colors for special elements",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "hex": {
+                "type": "string",
+                "pattern": "^#[0-9A-Fa-f]{6}$"
+              },
+              "usage": {
+                "type": "string",
+                "examples": ["Success messages", "Sale badges", "Warnings"]
+              }
+            },
+            "required": ["hex"]
+          },
+          "maxItems": 3
+        },
+        "gradients": {
+          "description": "Optional gradient definitions for modern designs",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "examples": ["Primary Gradient", "Hero Background"]
+              },
+              "type": {
+                "type": "string",
+                "enum": ["linear", "radial"]
+              },
+              "angle": {
+                "type": "integer",
+                "description": "Angle in degrees for linear gradients",
+                "minimum": 0,
+                "maximum": 360
+              },
+              "colors": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^#[0-9A-Fa-f]{6}$"
+                },
+                "minItems": 2,
+                "maxItems": 4
+              }
+            },
+            "required": ["colors"]
+          },
+          "maxItems": 2
+        }
+      },
+      "required": ["primary", "secondary", "neutral"]
+    },
+    "typography": {
+      "description": "Complete typography system",
+      "type": "object",
+      "properties": {
+        "fontFamilies": {
+          "description": "Font stack definitions",
+          "type": "object",
+          "properties": {
+            "heading": {
+              "description": "Font for headlines and titles",
+              "type": "object",
+              "properties": {
+                "primary": {
+                  "type": "string",
+                  "description": "Primary font name",
+                  "examples": ["Montserrat", "Playfair Display", "Inter"]
+                },
+                "fallback": {
+                  "type": "string",
+                  "description": "Web-safe fallback stack",
+                  "default": "Arial, sans-serif",
+                  "examples": ["Georgia, serif", "Arial, sans-serif", "system-ui, sans-serif"]
+                },
+                "weight": {
+                  "type": "array",
+                  "description": "Available font weights",
+                  "items": {
+                    "type": "integer",
+                    "enum": [100, 200, 300, 400, 500, 600, 700, 800, 900]
+                  },
+                  "default": [400, 700]
+                }
+              },
+              "required": ["primary", "fallback"]
+            },
+            "body": {
+              "description": "Font for body text and descriptions",
+              "type": "object",
+              "properties": {
+                "primary": {
+                  "type": "string",
+                  "examples": ["Open Sans", "Roboto", "Lato"]
+                },
+                "fallback": {
+                  "type": "string",
+                  "default": "Arial, sans-serif"
+                },
+                "weight": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer",
+                    "enum": [100, 200, 300, 400, 500, 600, 700, 800, 900]
+                  },
+                  "default": [400, 600]
+                }
+              },
+              "required": ["primary", "fallback"]
+            }
+          },
+          "required": ["heading", "body"]
+        },
+        "scale": {
+          "description": "Typography sizing system",
+          "type": "object",
+          "properties": {
+            "baseSize": {
+              "type": "integer",
+              "description": "Base font size in pixels",
+              "default": 16,
+              "minimum": 14,
+              "maximum": 18
+            },
+            "scaleRatio": {
+              "type": "number",
+              "description": "Scaling ratio for type hierarchy",
+              "default": 1.25,
+              "enum": [1.125, 1.2, 1.25, 1.333, 1.414, 1.5, 1.618],
+              "examples": [1.25, 1.333, 1.618]
+            }
+          }
+        },
+        "styles": {
+          "description": "Text styling preferences",
+          "type": "object",
+          "properties": {
+            "headingCase": {
+              "type": "string",
+              "enum": ["normal", "uppercase", "lowercase", "title"],
+              "default": "normal"
+            },
+            "letterSpacing": {
+              "type": "string",
+              "enum": ["tight", "normal", "loose"],
+              "default": "normal"
+            },
+            "lineHeight": {
+              "type": "string",
+              "enum": ["tight", "normal", "relaxed"],
+              "default": "normal"
+            }
+          }
+        }
+      },
+      "required": ["fontFamilies"]
+    },
+    "logoAssets": {
+      "description": "Logo variations and usage guidelines",
+      "type": "object",
+      "properties": {
+        "primary": {
+          "description": "Main logo version",
+          "type": "object",
+          "properties": {
+            "url": {
+              "type": "string",
+              "format": "uri",
+              "description": "URL to logo file (PNG/SVG preferred)"
+            },
+            "aspectRatio": {
+              "type": "number",
+              "description": "Width/height ratio for proper scaling",
+              "examples": [2.5, 1.0, 3.2]
+            },
+            "minWidth": {
+              "type": "integer",
+              "description": "Minimum width in pixels",
+              "default": 120
+            }
+          },
+          "required": ["url", "aspectRatio"]
+        },
+        "variations": {
+          "description": "Alternative logo versions",
+          "type": "object",
+          "properties": {
+            "light": {
+              "description": "Logo for dark backgrounds",
+              "type": "string",
+              "format": "uri"
+            },
+            "dark": {
+              "description": "Logo for light backgrounds",
+              "type": "string",
+              "format": "uri"
+            },
+            "icon": {
+              "description": "Square icon version for small spaces",
+              "type": "string",
+              "format": "uri"
+            },
+            "wordmark": {
+              "description": "Text-only version",
+              "type": "string",
+              "format": "uri"
+            }
+          }
+        },
+        "placement": {
+          "description": "Logo placement preferences",
+          "type": "object",
+          "properties": {
+            "position": {
+              "type": "string",
+              "enum": ["top-left", "top-center", "top-right", "bottom-left", "bottom-center", "bottom-right"],
+              "default": "top-left"
+            },
+            "padding": {
+              "type": "string",
+              "description": "Clear space around logo",
+              "enum": ["compact", "standard", "spacious"],
+              "default": "standard"
+            }
+          }
+        }
+      },
+      "required": ["primary"]
+    },
+    "visualStyle": {
+      "description": "Overall visual design language",
+      "type": "object",
+      "properties": {
+        "aesthetic": {
+          "description": "Primary design aesthetic",
+          "type": "string",
+          "enum": [
+            "minimalist",
+            "modern",
+            "classic",
+            "playful",
+            "bold",
+            "elegant",
+            "tech",
+            "organic",
+            "retro",
+            "luxury",
+            "hand-crafted",
+            "corporate"
+          ]
+        },
+        "mood": {
+          "description": "Emotional tone of visuals",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "professional",
+              "friendly",
+              "serious",
+              "energetic",
+              "calm",
+              "innovative",
+              "trustworthy",
+              "approachable",
+              "sophisticated",
+              "fun"
+            ]
+          },
+          "minItems": 1,
+          "maxItems": 3
+        },
+        "imageryStyle": {
+          "description": "Photography/illustration preferences",
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["photography", "illustration", "mixed", "3d-renders", "abstract"]
+            },
+            "treatment": {
+              "type": "string",
+              "enum": ["realistic", "stylized", "filtered", "duotone", "black-white"],
+              "default": "realistic"
+            },
+            "colorGrading": {
+              "type": "string",
+              "enum": ["vibrant", "muted", "warm", "cool", "high-contrast", "soft"],
+              "default": "vibrant"
+            }
+          },
+          "required": ["type"]
+        }
+      },
+      "required": ["aesthetic", "mood", "imageryStyle"]
+    },
+    "layoutPrinciples": {
+      "description": "Design layout and spacing guidelines",
+      "type": "object",
+      "properties": {
+        "gridSystem": {
+          "type": "string",
+          "enum": ["strict-grid", "flexible", "asymmetric", "centered"],
+          "default": "flexible"
+        },
+        "spacing": {
+          "description": "Spacing and padding approach",
+          "type": "string",
+          "enum": ["compact", "comfortable", "spacious"],
+          "default": "comfortable"
+        },
+        "alignment": {
+          "type": "string",
+          "enum": ["left", "center", "right", "justified"],
+          "default": "left"
+        },
+        "hierarchy": {
+          "description": "Visual hierarchy emphasis",
+          "type": "string",
+          "enum": ["strong", "moderate", "subtle"],
+          "default": "moderate"
+        }
+      }
+    },
+    "designElements": {
+      "description": "Recurring design elements and patterns",
+      "type": "object",
+      "properties": {
+        "shapes": {
+          "description": "Characteristic shapes used in designs",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["circles", "rounded-corners", "sharp-corners", "hexagons", "organic", "geometric", "none"]
+          },
+          "default": ["rounded-corners"]
+        },
+        "borderRadius": {
+          "description": "Corner rounding in pixels",
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 50,
+          "default": 8
+        },
+        "shadows": {
+          "description": "Shadow usage and style",
+          "type": "string",
+          "enum": ["none", "subtle", "medium", "dramatic"],
+          "default": "subtle"
+        },
+        "patterns": {
+          "description": "Background patterns or textures",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["none", "dots", "lines", "waves", "gradient-mesh", "noise", "geometric", "custom"]
+          }
+        },
+        "iconStyle": {
+          "description": "Icon design approach",
+          "type": "string",
+          "enum": ["line", "filled", "duo-tone", "3d", "hand-drawn"],
+          "default": "line"
+        }
+      }
+    },
+    "animations": {
+      "description": "Motion and animation preferences",
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true
+        },
+        "style": {
+          "type": "string",
+          "enum": ["none", "subtle", "smooth", "bouncy", "dramatic"],
+          "default": "smooth"
+        },
+        "speed": {
+          "type": "string",
+          "enum": ["slow", "moderate", "fast"],
+          "default": "moderate"
+        }
+      }
+    },
+    "brandPersonality": {
+      "description": "Brand character traits that influence visual decisions",
+      "type": "object",
+      "properties": {
+        "formality": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10,
+          "description": "1 = very casual, 10 = very formal"
+        },
+        "innovation": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10,
+          "description": "1 = traditional, 10 = cutting-edge"
+        },
+        "warmth": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10,
+          "description": "1 = cool/distant, 10 = warm/friendly"
+        }
+      }
+    },
+    "accessibilityPreferences": {
+      "description": "Accessibility requirements for visual elements",
+      "type": "object",
+      "properties": {
+        "contrastLevel": {
+          "type": "string",
+          "enum": ["AA", "AAA", "standard"],
+          "default": "AA",
+          "description": "WCAG contrast compliance level"
+        },
+        "colorBlindSafe": {
+          "type": "boolean",
+          "default": false,
+          "description": "Ensure colors work for color blind users"
+        },
+        "reduceMotion": {
+          "type": "boolean",
+          "default": false,
+          "description": "Minimize animations for motion sensitivity"
+        }
+      }
+    }
+  },
+  "required": [
+    "brandName",
+    "colorPalette",
+    "typography",
+    "visualStyle"
+  ],
+  "examples": [
+    {
+      "brandName": "TechStart Solutions",
+      "colorPalette": {
+        "primary": {
+          "hex": "#5B21B6",
+          "name": "Tech Purple",
+          "usage": "CTAs, headlines, key UI elements"
+        },
+        "secondary": {
+          "hex": "#10B981",
+          "name": "Growth Green",
+          "usage": "Success states, secondary buttons"
+        },
+        "neutral": {
+          "dark": "#1F2937",
+          "light": "#FFFFFF",
+          "mid": "#6B7280"
+        },
+        "gradients": [
+          {
+            "name": "Hero Gradient",
+            "type": "linear",
+            "angle": 135,
+            "colors": ["#5B21B6", "#8B5CF6"]
+          }
+        ]
+      },
+      "typography": {
+        "fontFamilies": {
+          "heading": {
+            "primary": "Inter",
+            "fallback": "system-ui, sans-serif",
+            "weight": [600, 700, 800]
+          },
+          "body": {
+            "primary": "Inter",
+            "fallback": "system-ui, sans-serif",
+            "weight": [400, 500]
+          }
+        },
+        "scale": {
+          "baseSize": 16,
+          "scaleRatio": 1.25
+        },
+        "styles": {
+          "headingCase": "normal",
+          "letterSpacing": "tight",
+          "lineHeight": "normal"
+        }
+      },
+      "logoAssets": {
+        "primary": {
+          "url": "https://example.com/logo.svg",
+          "aspectRatio": 2.8,
+          "minWidth": 140
+        },
+        "variations": {
+          "light": "https://example.com/logo-light.svg",
+          "icon": "https://example.com/icon.svg"
+        },
+        "placement": {
+          "position": "top-left",
+          "padding": "standard"
+        }
+      },
+      "visualStyle": {
+        "aesthetic": "modern",
+        "mood": ["innovative", "professional", "approachable"],
+        "imageryStyle": {
+          "type": "mixed",
+          "treatment": "stylized",
+          "colorGrading": "vibrant"
+        }
+      },
+      "layoutPrinciples": {
+        "gridSystem": "strict-grid",
+        "spacing": "comfortable",
+        "alignment": "left",
+        "hierarchy": "strong"
+      },
+      "designElements": {
+        "shapes": ["rounded-corners", "geometric"],
+        "borderRadius": 12,
+        "shadows": "subtle",
+        "patterns": ["gradient-mesh"],
+        "iconStyle": "duo-tone"
+      },
+      "animations": {
+        "enabled": true,
+        "style": "smooth",
+        "speed": "moderate"
+      },
+      "brandPersonality": {
+        "formality": 6,
+        "innovation": 9,
+        "warmth": 7
+      },
+      "accessibilityPreferences": {
+        "contrastLevel": "AA",
+        "colorBlindSafe": true,
+        "reduceMotion": false
+      }
+    }
+  ]
+}
