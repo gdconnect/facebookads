@@ -1,0 +1,735 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Meta Ad Creative Specification",
+  "description": "# Meta (Facebook/Instagram) Ad Creative Specification v2.0\n\n## Purpose\nThis comprehensive JSON Schema serves as the authoritative specification for creating Meta ad creatives across Facebook, Instagram, Messenger, and Audience Network. It defines all structural requirements, constraints, and best practices for AI agents generating ad assets.\n\n## Core Components\n- **Text Elements**: Primary text, headlines, and descriptions with character limits\n- **Media Assets**: Images and videos with placement-specific adaptations\n- **Call-to-Action**: Predefined CTA buttons supported by Meta's ad platform\n- **Placement Specifications**: 12+ placement types with unique requirements\n\n## Key Features\n- **Multi-Placement Support**: Automatic adaptation for Feed, Stories, Reels, Marketplace, etc.\n- **Text Overlay Validation**: Ensures compliance with Meta's 20% text rule for images\n- **File Size Management**: Enforces platform limits (30MB images, 4GB videos)\n- **Resolution Requirements**: Placement-specific minimum and maximum dimensions\n- **Safe Zone Guidelines**: Prevents important content from being obscured by UI elements\n\n## Validation Rules\n- Conditional logic for format-specific requirements\n- Aspect ratio enforcement with corresponding resolution constraints\n- Duration limits for video content by placement type\n- Required vs. optional fields clearly defined\n\n## Usage Guidelines\nAI agents should:\n1. Generate assets for all specified placement adaptations\n2. Ensure text overlay percentage stays below 20% for optimal delivery\n3. Create multiple resolution variants as defined in placementAdaptations\n4. Validate file sizes before submission\n5. Apply safe zones for Stories/Reels to avoid UI overlap",
+  "type": "object",
+  "properties": {
+    "campaignName": {
+      "description": "## Campaign Name\nA human-readable identifier linking this creative to its parent campaign. Used for organizational purposes and reporting. Example: 'Q4_2024_HolidayPromo' or 'BrandAwareness_US_Sept'.",
+      "type": "string"
+    },
+    "adName": {
+      "description": "## Ad Name\nA unique identifier for this specific creative variant. Should be descriptive enough to distinguish between different versions. Best practice: Include format, audience, or test variant information. Example: 'Holiday_Sale_Carousel_A' or 'BackToSchool_Video_Millennials'.",
+      "type": "string"
+    },
+    "textComponents": {
+      "description": "## Text Components\nAll textual elements that appear with the ad creative. These components display differently across placements and should be optimized for mobile-first viewing.",
+      "type": "object",
+      "properties": {
+        "primaryText": {
+          "description": "### Primary Text (Main Body)\nThe main message that appears above the media in most placements. This is your opportunity to provide context, tell a story, or elaborate on your value proposition.\n\n**Best Practices:**\n- Front-load key information in first 125 characters (mobile truncation point)\n- Use line breaks for readability\n- Include relevant emojis sparingly for visual appeal\n- Avoid excessive hashtags (2-3 maximum)\n\n**Character Limits:**\n- Maximum: 900 characters\n- Recommended: 125 characters for optimal mobile display\n- Truncation: Shows '...See More' after ~125 characters on mobile",
+          "type": "string",
+          "maxLength": 900
+        },
+        "headline": {
+          "description": "### Headline\nA concise, attention-grabbing statement that appears prominently below the media. This is often the first text users read after viewing the image/video.\n\n**Best Practices:**\n- Lead with action verbs or numbers\n- Highlight the main benefit or offer\n- Create urgency when appropriate\n- Avoid ALL CAPS (appears spammy)\n\n**Character Limits:**\n- Maximum: 40 characters\n- Optimal: 25-35 characters to avoid truncation\n- Display: Bold text in most placements",
+          "type": "string",
+          "maxLength": 40
+        },
+        "description": {
+          "description": "### Description (Optional)\nSupplementary text that provides additional context. Only displays in select placements like Facebook Feed link ads.\n\n**Best Practices:**\n- Complement, don't repeat the headline\n- Include secondary benefits or details\n- Use for disclaimers if needed\n\n**Character Limits:**\n- Maximum: 30 characters\n- Visibility: Limited to specific placements\n- Often hidden on mobile devices",
+          "type": "string",
+          "maxLength": 30
+        }
+      },
+      "required": ["primaryText", "headline"]
+    },
+    "callToAction": {
+      "description": "## Call-to-Action (CTA) Button\nThe action button that appears with your ad. Choose the CTA that best matches your campaign objective and landing page experience.\n\n**Selection Guidelines:**\n- **E-commerce**: SHOP_NOW, ORDER_NOW, BUY_TICKETS\n- **Lead Generation**: SIGN_UP, GET_QUOTE, APPLY_NOW\n- **App Promotion**: DOWNLOAD, INSTALL_NOW, PLAY_GAME\n- **Engagement**: LEARN_MORE, WATCH_MORE, SEE_MENU\n- **Communication**: MESSAGE_PAGE, WHATSAPP_MESSAGE, CALL_NOW\n\n**Notes:**\n- CTA text is automatically translated based on viewer's language\n- Some CTAs perform better with specific objectives\n- Test different CTAs to optimize conversion rates",
+      "type": "string",
+      "enum": [
+        "APPLY_NOW",
+        "BOOK_TRAVEL",
+        "BUY_TICKETS",
+        "CALL_NOW",
+        "CONTACT_US",
+        "DONATE_NOW",
+        "DOWNLOAD",
+        "GET_DIRECTIONS",
+        "GET_OFFER",
+        "GET_QUOTE",
+        "INSTALL_NOW",
+        "LEARN_MORE",
+        "LISTEN_NOW",
+        "MESSAGE_PAGE",
+        "ORDER_NOW",
+        "PLAY_GAME",
+        "REQUEST_TIME",
+        "SEE_MENU",
+        "SEND_MESSAGE",
+        "SHOP_NOW",
+        "SIGN_UP",
+        "SUBSCRIBE",
+        "WATCH_MORE",
+        "WHATSAPP_MESSAGE"
+      ]
+    },
+    "destinationUrl": {
+      "description": "## Destination URL\nThe landing page where users are directed after clicking your ad.\n\n**Requirements:**\n- Must be a valid, accessible URL\n- Should match the promised content in your ad\n- Mobile-optimized pages recommended (majority of traffic)\n- Fast load times critical for conversion\n\n**Best Practices:**\n- Use UTM parameters for tracking\n- Ensure SSL certificate is valid (https://)\n- Test on multiple devices before launching\n- Consider using deep links for app installations\n\n**Examples:**\n- Website: 'https://example.com/holiday-sale'\n- App deep link: 'myapp://product/12345'\n- Facebook page: 'https://facebook.com/yourbusiness'",
+      "type": "string",
+      "format": "uri"
+    },
+    "mediaAssets": {
+      "description": "## Media Assets\nThe visual components of your ad (images or videos). Multiple assets enable carousel ads (2-10 cards) or dynamic creative optimization.\n\n**Asset Requirements:**\n- Each asset needs placement-specific adaptations\n- File size limits: 30MB for images, 4GB for videos\n- Text overlay should be <20% for images (Meta policy)\n- Support multiple formats for maximum reach\n\n**Carousel Considerations:**\n- First card gets most views (use strongest asset)\n- Each card can have unique headlines\n- Maintains consistent visual style across cards\n- 2-10 cards supported",
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 10,
+      "items": {
+        "type": "object",
+        "properties": {
+          "assetType": {
+            "description": "### Asset Type\nSpecifies whether this is an image or video asset.\n\n**Image Assets:**\n- Static visual content\n- Supports JPG, PNG formats\n- Lower production cost\n- Faster to load\n\n**Video Assets:**\n- Motion content with optional audio\n- Supports MP4, MOV formats\n- Higher engagement rates\n- Auto-play in most placements",
+            "type": "string",
+            "enum": ["image", "video"]
+          },
+          "sourceUrl": {
+            "description": "### Source URL\nThe location of the media file. Must be accessible by Meta's servers for processing.\n\n**Requirements:**\n- Publicly accessible URL\n- Direct link to file (not a webpage)\n- Stable hosting (avoid temporary URLs)\n- HTTPS preferred for security",
+            "type": "string",
+            "format": "uri"
+          },
+          "fileSizeKB": {
+            "description": "### File Size (KB)\nThe size of the media file in kilobytes. Meta enforces strict limits to ensure optimal delivery.\n\n**Limits:**\n- Images: Maximum 30,720 KB (30 MB)\n- Videos: Maximum 4,194,304 KB (4 GB)\n\n**Optimization Tips:**\n- Compress images without visible quality loss\n- Use appropriate video bitrates\n- Consider CDN for faster delivery",
+            "type": "integer",
+            "minimum": 1
+          },
+          "textOverlayPercentage": {
+            "description": "### Text Overlay Percentage\nThe percentage of image area covered by text, graphics, or logos. Meta's algorithm may limit delivery of images with >20% text coverage.\n\n**Guidelines:**\n- <20%: Optimal delivery and reach\n- 20-50%: Reduced delivery\n- >50%: Significantly limited reach\n\n**What Counts as Text:**\n- All readable text in image\n- Numbers and symbols\n- Logos with text\n- Watermarks\n\n**Exceptions:**\n- Product shots where text is naturally part of product\n- Book covers, album artwork\n- Games, app screenshots",
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100,
+            "multipleOf": 0.1
+          },
+          "placementAdaptations": {
+            "description": "### Placement Adaptations\nDefines the required versions of your creative for different Meta placements. AI agents should generate optimized versions for each specified placement.\n\n**Strategy Tips:**\n- Start with 3-4 core placements (Feed, Stories, Reels)\n- Expand to additional placements based on performance\n- Each placement has unique user behavior patterns\n- Creative should be adapted, not just resized\n\n**Available Placements:**\n- **feed**: Main Facebook/Instagram feed (square, vertical, horizontal)\n- **stories_reels**: Full-screen vertical experiences\n- **right_column**: Desktop-only placement\n- **marketplace**: Shopping-focused environment\n- **search_results**: Appears in search queries\n- **messenger_inbox**: Within Messenger conversations\n- **messenger_stories**: Messenger's story feature\n- **in_stream_video**: Mid-roll video ads\n- **instant_articles**: Within article content\n- **audience_network_native**: Third-party apps (native)\n- **audience_network_banner**: Third-party apps (banner)\n- **audience_network_interstitial**: Third-party apps (full-screen)",
+            "type": "object",
+            "properties": {
+              "feed": {
+                "description": "#### Facebook & Instagram Feed\nThe primary placement for most campaigns. Appears in the main scrolling feed on mobile and desktop.\n\n**User Context:**\n- Passive browsing mode\n- Quick scroll behavior (2-3 seconds per post)\n- Sound usually off (use captions for videos)\n\n**Creative Tips:**\n- First 3 seconds crucial for videos\n- Use bright, high-contrast visuals\n- Square (1:1) works universally\n- Vertical (4:5) maximizes mobile screen space",
+                "$ref": "#/$defs/feedMediaFormat"
+              },
+              "stories_reels": {
+                "description": "#### Stories & Reels\nFull-screen, immersive vertical format. High engagement from younger demographics.\n\n**User Context:**\n- Active viewing mode\n- Quick tap-through behavior (view time: 2-5 seconds)\n- Sound often on\n- Full attention on single piece of content\n\n**Creative Tips:**\n- Design for vertical viewing (9:16)\n- Keep key elements in safe zones\n- Use motion and transitions\n- Add interactive elements (polls, questions)",
+                "$ref": "#/$defs/storiesReelsMediaFormat"
+              },
+              "right_column": {
+                "description": "#### Desktop Right Column\nDesktop-only placement appearing in the right sidebar of Facebook.\n\n**User Context:**\n- Secondary attention area\n- Persistent visibility while browsing\n- Smaller display size\n\n**Creative Tips:**\n- Simple, bold visuals work best\n- Minimal text overlay\n- Strong contrast for small display",
+                "$ref": "#/$defs/rightColumnMediaFormat"
+              },
+              "marketplace": {
+                "description": "#### Facebook Marketplace\nAppears within the Marketplace shopping experience.\n\n**User Context:**\n- High purchase intent\n- Comparison shopping mindset\n- Looking for deals and value\n\n**Creative Tips:**\n- Show products clearly\n- Include pricing if possible\n- Highlight unique selling points",
+                "$ref": "#/$defs/marketplaceMediaFormat"
+              },
+              "search_results": {
+                "description": "#### Search Results\nAppears when users search on Facebook.\n\n**User Context:**\n- Active information seeking\n- Specific intent or interest\n- Higher engagement probability\n\n**Creative Tips:**\n- Relevant to search terms\n- Clear value proposition\n- Quick-loading assets",
+                "$ref": "#/$defs/searchResultsMediaFormat"
+              },
+              "messenger_inbox": {
+                "description": "Messenger inbox ad placement",
+                "$ref": "#/$defs/messengerInboxMediaFormat"
+              },
+              "messenger_stories": {
+                "description": "Messenger Stories placement",
+                "$ref": "#/$defs/messengerStoriesMediaFormat"
+              },
+              "in_stream_video": {
+                "description": "In-stream video ads (mid-roll in videos)",
+                "$ref": "#/$defs/inStreamVideoFormat"
+              },
+              "instant_articles": {
+                "description": "Facebook Instant Articles placement",
+                "$ref": "#/$defs/instantArticlesMediaFormat"
+              },
+              "audience_network_native": {
+                "description": "Audience Network native placements in third-party apps",
+                "$ref": "#/$defs/audienceNetworkNativeFormat"
+              },
+              "audience_network_banner": {
+                "description": "Audience Network banner placements in third-party apps",
+                "$ref": "#/$defs/audienceNetworkBannerFormat"
+              },
+              "audience_network_interstitial": {
+                "description": "Audience Network full-screen interstitial in third-party apps",
+                "$ref": "#/$defs/audienceNetworkInterstitialFormat"
+              }
+            },
+            "minProperties": 1
+          }
+        },
+        "required": ["assetType", "sourceUrl", "placementAdaptations", "fileSizeKB"],
+        "allOf": [
+          {
+            "if": {
+              "properties": { "assetType": { "const": "image" } }
+            },
+            "then": {
+              "required": ["textOverlayPercentage"],
+              "properties": {
+                "fileSizeKB": { "maximum": 30720 }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": { "assetType": { "const": "video" } }
+            },
+            "then": {
+              "properties": {
+                "fileSizeKB": { "maximum": 4194304 }
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "required": [
+    "adName",
+    "textComponents",
+    "callToAction",
+    "destinationUrl",
+    "mediaAssets"
+  ],
+  "$defs": {
+    "feedMediaFormat": {
+      "type": "object",
+      "description": "## Feed Media Format Specification\nConfiguration for assets displayed in Facebook and Instagram feeds. The most versatile placement supporting multiple aspect ratios.",
+      "properties": {
+        "aspectRatio": {
+          "description": "### Aspect Ratio for Feed\n\n**Options:**\n- **1:1 (Square)**: Universal format, works everywhere\n- **4:5 (Vertical)**: Maximizes mobile screen real estate\n- **1.91:1 (Horizontal)**: Traditional landscape format\n\n**Recommendations:**\n- Mobile-first: Use 4:5 or 1:1\n- Desktop focus: 1.91:1 works well\n- Carousel: Consistent ratio across cards",
+          "type": "string",
+          "enum": ["1:1", "4:5", "1.91:1"]
+        },
+        "resolution": {
+          "description": "### Resolution Requirements\nPixel dimensions for optimal quality. Higher resolution ensures crisp display on retina screens.\n\n**Minimum Requirements:**\n- 1080px on shortest side\n- No maximum, but larger files load slower\n\n**Recommended Sizes:**\n- Square: 1080x1080 to 1920x1920\n- Vertical: 1080x1350 to 1920x2400\n- Horizontal: 1200x628 to 1920x1005",
+          "type": "object",
+          "properties": {
+            "width": {
+              "type": "integer"
+            },
+            "height": {
+              "type": "integer"
+            }
+          },
+          "required": ["width", "height"]
+        },
+        "fileFormat": {
+          "description": "### File Format\n**Supported Formats:**\n- **JPG**: Best for photos, smaller file size\n- **PNG**: Best for graphics, supports transparency\n- **MP4**: Standard video format, wide compatibility\n- **MOV**: Apple video format, high quality",
+          "type": "string",
+          "enum": ["JPG", "PNG", "MP4", "MOV"]
+        },
+        "durationSeconds": {
+          "description": "### Video Duration\nLength of video content in seconds.\n\n**Recommendations by Content Type:**\n- **Awareness**: 15-30 seconds\n- **Consideration**: 30-60 seconds\n- **Conversion**: 10-15 seconds\n- **Stories**: 5-15 seconds\n\n**Platform Limits:**\n- Minimum: 1 second\n- Maximum: 240 seconds (4 minutes)\n- Sweet spot: 15 seconds or less",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 240
+        }
+      },
+      "required": ["aspectRatio", "resolution", "fileFormat"],
+      "allOf": [
+        {
+          "if": {
+            "properties": { "aspectRatio": { "const": "1:1" } }
+          },
+          "then": {
+            "properties": {
+              "resolution": {
+                "properties": {
+                  "width": { "minimum": 1080, "maximum": 1920 },
+                  "height": { "minimum": 1080, "maximum": 1920 }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "aspectRatio": { "const": "4:5" } }
+          },
+          "then": {
+            "properties": {
+              "resolution": {
+                "properties": {
+                  "width": { "minimum": 1080, "maximum": 1920 },
+                  "height": { "minimum": 1350, "maximum": 2400 }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "aspectRatio": { "const": "1.91:1" } }
+          },
+          "then": {
+            "properties": {
+              "resolution": {
+                "properties": {
+                  "width": { "minimum": 1200, "maximum": 1920 },
+                  "height": { "minimum": 628, "maximum": 1005 }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "fileFormat": { "enum": ["MP4", "MOV"] } }
+          },
+          "then": {
+            "required": ["durationSeconds"]
+          }
+        }
+      ]
+    },
+    "storiesReelsMediaFormat": {
+      "type": "object",
+      "description": "## Stories & Reels Format Specification\nFull-screen vertical format for immersive mobile experiences. Highest engagement rates among younger audiences.",
+      "properties": {
+        "aspectRatio": {
+          "description": "### Aspect Ratio\nStories and Reels are exclusively 9:16 vertical format to fill mobile screens completely.",
+          "type": "string",
+          "enum": ["9:16"]
+        },
+        "resolution": {
+          "description": "### Resolution\nFixed at 1080x1920 pixels for optimal quality across all devices. This is the standard mobile full-screen resolution.",
+          "type": "object",
+          "properties": {
+            "width": {
+              "type": "integer",
+              "minimum": 1080,
+              "maximum": 1080
+            },
+            "height": {
+              "type": "integer",
+              "minimum": 1920,
+              "maximum": 1920
+            }
+          },
+          "required": ["width", "height"]
+        },
+        "fileFormat": {
+          "type": "string",
+          "enum": ["JPG", "PNG", "MP4", "MOV"]
+        },
+        "durationSeconds": {
+          "description": "### Video Duration for Stories/Reels\n\n**Duration Limits by Type:**\n- **Image Stories**: 1-5 seconds default display\n- **Video Stories**: 1-60 seconds maximum\n- **Reels**: Up to 90 seconds\n\n**Optimal Length:**\n- 15 seconds or less for best completion rates\n- Front-load key message in first 3 seconds",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 90
+        },
+        "safeZones": {
+          "description": "### Safe Zones\nAreas to keep clear of important content due to UI overlay elements.\n\n**Why It Matters:**\nStories/Reels have UI elements (profile info, CTAs, captions) that overlay content. Critical information should stay within safe zones.\n\n**Reserved Areas:**\n- **Top 250px**: Profile picture, username, close button\n- **Bottom 310px**: Caption, CTA button, interaction buttons\n\n**Design Tips:**\n- Center key visuals and text\n- Test with UI overlay preview\n- Use full screen for background/atmosphere",
+          "type": "object",
+          "properties": {
+            "top": {
+              "type": "integer",
+              "default": 250,
+              "description": "Top 250px may be covered by profile info"
+            },
+            "bottom": {
+              "type": "integer",
+              "default": 310,
+              "description": "Bottom 310px may be covered by caption and CTA"
+            }
+          }
+        }
+      },
+      "required": ["aspectRatio", "resolution", "fileFormat"],
+      "if": {
+        "properties": { "fileFormat": { "enum": ["MP4", "MOV"] } }
+      },
+      "then": {
+        "required": ["durationSeconds"]
+      }
+    },
+    "rightColumnMediaFormat": {
+      "type": "object",
+      "properties": {
+        "aspectRatio": {
+          "description": "Right column uses square format.",
+          "type": "string",
+          "enum": ["1:1"]
+        },
+        "resolution": {
+          "description": "Right column recommended 1200x1200px.",
+          "type": "object",
+          "properties": {
+            "width": {
+              "type": "integer",
+              "minimum": 254,
+              "maximum": 1200
+            },
+            "height": {
+              "type": "integer",
+              "minimum": 254,
+              "maximum": 1200
+            }
+          },
+          "required": ["width", "height"]
+        },
+        "fileFormat": {
+          "type": "string",
+          "enum": ["JPG", "PNG"]
+        }
+      },
+      "required": ["aspectRatio", "resolution", "fileFormat"]
+    },
+    "marketplaceMediaFormat": {
+      "type": "object",
+      "properties": {
+        "aspectRatio": {
+          "description": "Marketplace supports square and horizontal formats.",
+          "type": "string",
+          "enum": ["1:1", "1.91:1"]
+        },
+        "resolution": {
+          "description": "Marketplace recommended minimum 1200px on shortest side.",
+          "type": "object",
+          "properties": {
+            "width": {
+              "type": "integer",
+              "minimum": 1200
+            },
+            "height": {
+              "type": "integer",
+              "minimum": 628
+            }
+          },
+          "required": ["width", "height"]
+        },
+        "fileFormat": {
+          "type": "string",
+          "enum": ["JPG", "PNG", "MP4", "MOV"]
+        },
+        "durationSeconds": {
+          "description": "Video duration in seconds.",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 240
+        }
+      },
+      "required": ["aspectRatio", "resolution", "fileFormat"],
+      "if": {
+        "properties": { "fileFormat": { "enum": ["MP4", "MOV"] } }
+      },
+      "then": {
+        "required": ["durationSeconds"]
+      }
+    },
+    "searchResultsMediaFormat": {
+      "type": "object",
+      "properties": {
+        "aspectRatio": {
+          "description": "Search results typically use square or horizontal format.",
+          "type": "string",
+          "enum": ["1:1", "1.91:1"]
+        },
+        "resolution": {
+          "description": "Search results minimum 1080px on shortest side.",
+          "type": "object",
+          "properties": {
+            "width": {
+              "type": "integer",
+              "minimum": 1080
+            },
+            "height": {
+              "type": "integer",
+              "minimum": 565
+            }
+          },
+          "required": ["width", "height"]
+        },
+        "fileFormat": {
+          "type": "string",
+          "enum": ["JPG", "PNG", "MP4", "MOV"]
+        },
+        "durationSeconds": {
+          "description": "Video duration in seconds.",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 240
+        }
+      },
+      "required": ["aspectRatio", "resolution", "fileFormat"],
+      "if": {
+        "properties": { "fileFormat": { "enum": ["MP4", "MOV"] } }
+      },
+      "then": {
+        "required": ["durationSeconds"]
+      }
+    },
+    "messengerInboxMediaFormat": {
+      "type": "object",
+      "properties": {
+        "aspectRatio": {
+          "description": "Messenger inbox uses horizontal format.",
+          "type": "string",
+          "enum": ["1.91:1"]
+        },
+        "resolution": {
+          "description": "Messenger inbox recommended 1200x628px.",
+          "type": "object",
+          "properties": {
+            "width": {
+              "type": "integer",
+              "minimum": 1200,
+              "maximum": 1920
+            },
+            "height": {
+              "type": "integer",
+              "minimum": 628,
+              "maximum": 1005
+            }
+          },
+          "required": ["width", "height"]
+        },
+        "fileFormat": {
+          "type": "string",
+          "enum": ["JPG", "PNG"]
+        }
+      },
+      "required": ["aspectRatio", "resolution", "fileFormat"]
+    },
+    "messengerStoriesMediaFormat": {
+      "type": "object",
+      "properties": {
+        "aspectRatio": {
+          "description": "Messenger Stories uses vertical 9:16 format.",
+          "type": "string",
+          "enum": ["9:16"]
+        },
+        "resolution": {
+          "description": "Messenger Stories recommended 1080x1920px.",
+          "type": "object",
+          "properties": {
+            "width": {
+              "type": "integer",
+              "minimum": 1080,
+              "maximum": 1080
+            },
+            "height": {
+              "type": "integer",
+              "minimum": 1920,
+              "maximum": 1920
+            }
+          },
+          "required": ["width", "height"]
+        },
+        "fileFormat": {
+          "type": "string",
+          "enum": ["JPG", "PNG", "MP4", "MOV"]
+        },
+        "durationSeconds": {
+          "description": "Video duration for Messenger Stories.",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 15
+        }
+      },
+      "required": ["aspectRatio", "resolution", "fileFormat"],
+      "if": {
+        "properties": { "fileFormat": { "enum": ["MP4", "MOV"] } }
+      },
+      "then": {
+        "required": ["durationSeconds"]
+      }
+    },
+    "inStreamVideoFormat": {
+      "type": "object",
+      "properties": {
+        "aspectRatio": {
+          "description": "In-stream video supports horizontal and square formats.",
+          "type": "string",
+          "enum": ["16:9", "1:1"]
+        },
+        "resolution": {
+          "description": "In-stream video minimum 1080px width.",
+          "type": "object",
+          "properties": {
+            "width": {
+              "type": "integer",
+              "minimum": 1080,
+              "maximum": 1920
+            },
+            "height": {
+              "type": "integer",
+              "minimum": 608,
+              "maximum": 1920
+            }
+          },
+          "required": ["width", "height"]
+        },
+        "fileFormat": {
+          "description": "In-stream only supports video formats.",
+          "type": "string",
+          "enum": ["MP4", "MOV"]
+        },
+        "durationSeconds": {
+          "description": "In-stream video ads: 5-15 seconds recommended, max 31 seconds.",
+          "type": "integer",
+          "minimum": 5,
+          "maximum": 31
+        }
+      },
+      "required": ["aspectRatio", "resolution", "fileFormat", "durationSeconds"]
+    },
+    "instantArticlesMediaFormat": {
+      "type": "object",
+      "properties": {
+        "aspectRatio": {
+          "description": "Instant Articles supports multiple formats.",
+          "type": "string",
+          "enum": ["1:1", "1.91:1"]
+        },
+        "resolution": {
+          "description": "Instant Articles minimum 1080px on shortest side.",
+          "type": "object",
+          "properties": {
+            "width": {
+              "type": "integer",
+              "minimum": 1080
+            },
+            "height": {
+              "type": "integer",
+              "minimum": 565
+            }
+          },
+          "required": ["width", "height"]
+        },
+        "fileFormat": {
+          "type": "string",
+          "enum": ["JPG", "PNG", "MP4", "MOV"]
+        },
+        "durationSeconds": {
+          "description": "Video duration in seconds.",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 240
+        }
+      },
+      "required": ["aspectRatio", "resolution", "fileFormat"],
+      "if": {
+        "properties": { "fileFormat": { "enum": ["MP4", "MOV"] } }
+      },
+      "then": {
+        "required": ["durationSeconds"]
+      }
+    },
+    "audienceNetworkNativeFormat": {
+      "type": "object",
+      "properties": {
+        "aspectRatio": {
+          "description": "Audience Network native supports square and horizontal.",
+          "type": "string",
+          "enum": ["1:1", "1.91:1"]
+        },
+        "resolution": {
+          "description": "Audience Network native minimum 1200px width.",
+          "type": "object",
+          "properties": {
+            "width": {
+              "type": "integer",
+              "minimum": 1200
+            },
+            "height": {
+              "type": "integer",
+              "minimum": 627
+            }
+          },
+          "required": ["width", "height"]
+        },
+        "fileFormat": {
+          "type": "string",
+          "enum": ["JPG", "PNG", "MP4", "MOV"]
+        },
+        "durationSeconds": {
+          "description": "Video duration in seconds.",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 240
+        }
+      },
+      "required": ["aspectRatio", "resolution", "fileFormat"],
+      "if": {
+        "properties": { "fileFormat": { "enum": ["MP4", "MOV"] } }
+      },
+      "then": {
+        "required": ["durationSeconds"]
+      }
+    },
+    "audienceNetworkBannerFormat": {
+      "type": "object",
+      "properties": {
+        "aspectRatio": {
+          "description": "Audience Network banner is horizontal.",
+          "type": "string",
+          "enum": ["9:16", "16:9"]
+        },
+        "resolution": {
+          "description": "Audience Network banner standard size 320x50px.",
+          "type": "object",
+          "properties": {
+            "width": {
+              "type": "integer",
+              "minimum": 320,
+              "maximum": 1200
+            },
+            "height": {
+              "type": "integer",
+              "minimum": 50,
+              "maximum": 675
+            }
+          },
+          "required": ["width", "height"]
+        },
+        "fileFormat": {
+          "type": "string",
+          "enum": ["JPG", "PNG"]
+        }
+      },
+      "required": ["aspectRatio", "resolution", "fileFormat"]
+    },
+    "audienceNetworkInterstitialFormat": {
+      "type": "object",
+      "properties": {
+        "aspectRatio": {
+          "description": "Audience Network interstitial supports vertical and horizontal.",
+          "type": "string",
+          "enum": ["9:16", "16:9"]
+        },
+        "resolution": {
+          "description": "Full screen resolution, minimum 1080px on shortest side.",
+          "type": "object",
+          "properties": {
+            "width": {
+              "type": "integer",
+              "minimum": 1080
+            },
+            "height": {
+              "type": "integer",
+              "minimum": 1080
+            }
+          },
+          "required": ["width", "height"]
+        },
+        "fileFormat": {
+          "type": "string",
+          "enum": ["JPG", "PNG", "MP4", "MOV"]
+        },
+        "durationSeconds": {
+          "description": "Video duration in seconds.",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 240
+        }
+      },
+      "required": ["aspectRatio", "resolution", "fileFormat"],
+      "if": {
+        "properties": { "fileFormat": { "enum": ["MP4", "MOV"] } }
+      },
+      "then": {
+        "required": ["durationSeconds"]
+      }
+    }
+  }
+}

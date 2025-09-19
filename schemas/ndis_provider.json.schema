@@ -1,0 +1,487 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "NDIS Service Provider Meta Ad Input - Western Australia",
+  "description": "Input schema for generating Meta ad creatives specifically for NDIS service providers in Western Australia. Ensures compliance with NDIS Quality and Safeguards Commission advertising guidelines while creating effective, accessible ads.",
+  "type": "object",
+  "properties": {
+    "providerDetails": {
+      "description": "Essential NDIS provider information for compliant advertising",
+      "type": "object",
+      "properties": {
+        "providerName": {
+          "description": "Registered NDIS provider name",
+          "type": "string",
+          "examples": ["Ability Support WA", "Perth Disability Services", "Southwest Care Solutions"]
+        },
+        "registrationNumber": {
+          "description": "NDIS provider registration number (optional but builds trust)",
+          "type": "string",
+          "pattern": "^[0-9]{7,10}$",
+          "examples": ["4050000123", "4050001234"]
+        },
+        "serviceAreas": {
+          "description": "Specific regions in WA where services are offered",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "perth_metro",
+              "perth_north",
+              "perth_south",
+              "perth_east",
+              "perth_west",
+              "perth_hills",
+              "bunbury",
+              "albany",
+              "geraldton",
+              "kalgoorlie",
+              "broome",
+              "mandurah",
+              "rockingham",
+              "joondalup",
+              "armadale",
+              "fremantle",
+              "midland",
+              "statewide"
+            ]
+          },
+          "minItems": 1
+        },
+        "registrationGroups": {
+          "description": "NDIS registration groups (determines what services can be advertised)",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "0104_high_intensity_daily_personal_activities",
+              "0107_daily_personal_activities", 
+              "0108_participation_community",
+              "0115_assist_life_stage_transition",
+              "0117_development_life_skills",
+              "0125_participate_community",
+              "0126_exercise_physiology",
+              "0128_therapeutic_supports",
+              "0133_specialised_disability_accommodation",
+              "0136_group_community_activities"
+            ]
+          },
+          "minItems": 1
+        }
+      },
+      "required": ["providerName", "serviceAreas", "registrationGroups"]
+    },
+    "targetParticipants": {
+      "description": "Define the NDIS participants you want to reach",
+      "type": "object",
+      "properties": {
+        "primaryDisabilityTypes": {
+          "description": "Disability types your services support (guides appropriate imagery and language)",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "autism",
+              "intellectual_disability",
+              "psychosocial_disability",
+              "physical_disability",
+              "neurological",
+              "sensory_vision",
+              "sensory_hearing",
+              "multiple_disabilities",
+              "developmental_delay",
+              "acquired_brain_injury"
+            ]
+          },
+          "minItems": 1
+        },
+        "ageGroups": {
+          "description": "Age groups served",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "early_childhood_0_6",
+              "children_7_14",
+              "young_people_15_24",
+              "adults_25_64",
+              "older_adults_65_plus"
+            ]
+          },
+          "minItems": 1
+        },
+        "culturalConsiderations": {
+          "description": "Specific cultural groups to consider (important for WA's diverse population)",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "aboriginal_torres_strait_islander",
+              "cald_backgrounds",
+              "vietnamese_community",
+              "chinese_community",
+              "italian_community",
+              "general_multicultural"
+            ]
+          }
+        },
+        "supportNeeds": {
+          "description": "Level of support your services cater to",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["standard", "high_intensity", "complex", "all_levels"]
+          }
+        }
+      },
+      "required": ["primaryDisabilityTypes", "ageGroups"]
+    },
+    "serviceOffering": {
+      "description": "Specific NDIS services being promoted",
+      "type": "object",
+      "properties": {
+        "primaryService": {
+          "description": "Main service to highlight",
+          "type": "string",
+          "enum": [
+            "support_coordination",
+            "daily_living_support",
+            "community_participation",
+            "allied_health",
+            "therapy_services",
+            "plan_management",
+            "supported_independent_living",
+            "specialist_disability_accommodation",
+            "respite_care",
+            "transport_services",
+            "employment_support",
+            "social_groups",
+            "capacity_building"
+          ]
+        },
+        "keyFeatures": {
+          "description": "What makes your service unique",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 3,
+          "examples": [
+            ["24/7 support available", "Experienced local team", "No waitlist"],
+            ["Culturally diverse staff", "NDIS registered", "Choice and control focused"],
+            ["Perth metro wide coverage", "Specialized autism support", "Family inclusive approach"]
+          ]
+        },
+        "availabilityMessage": {
+          "description": "Current availability status",
+          "type": "string",
+          "enum": [
+            "accepting_new_participants",
+            "limited_spots_available",
+            "waitlist_open",
+            "immediate_availability",
+            "booking_for_next_quarter"
+          ]
+        },
+        "freeServices": {
+          "description": "Any free consultations or assessments offered",
+          "type": "string",
+          "maxLength": 100,
+          "examples": ["Free initial consultation", "No-obligation meet and greet", "Free capacity building assessment"]
+        }
+      },
+      "required": ["primaryService", "keyFeatures", "availabilityMessage"]
+    },
+    "accessibilityRequirements": {
+      "description": "Ensure ads meet accessibility standards",
+      "type": "object",
+      "properties": {
+        "easyRead": {
+          "description": "Use simple, clear language suitable for cognitive disabilities",
+          "type": "boolean",
+          "default": true
+        },
+        "includeAuslan": {
+          "description": "Include Auslan interpretation in videos",
+          "type": "boolean",
+          "default": false
+        },
+        "visualDescriptions": {
+          "description": "Ensure all images have detailed alt text",
+          "type": "boolean",
+          "default": true
+        },
+        "highContrast": {
+          "description": "Use high contrast colors for vision impairment",
+          "type": "boolean",
+          "default": true
+        },
+        "captionsRequired": {
+          "description": "All videos must have captions",
+          "type": "boolean",
+          "default": true
+        }
+      }
+    },
+    "messagingTone": {
+      "description": "Communication approach aligned with NDIS principles",
+      "type": "object",
+      "properties": {
+        "primaryTone": {
+          "description": "Overall voice and approach",
+          "type": "string",
+          "enum": [
+            "empowering",
+            "supportive",
+            "professional_caring",
+            "friendly_approachable",
+            "informative",
+            "person_centered"
+          ]
+        },
+        "coreValues": {
+          "description": "NDIS values to emphasize",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "choice_and_control",
+              "independence",
+              "inclusion",
+              "respect",
+              "dignity",
+              "cultural_safety",
+              "person_centered",
+              "community_participation"
+            ]
+          },
+          "minItems": 1,
+          "maxItems": 3
+        },
+        "avoidTerms": {
+          "description": "Language to avoid (outdated or inappropriate terminology)",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": ["suffers from", "wheelchair bound", "special needs", "handicapped", "invalid"],
+          "examples": [["afflicted", "normal people", "the disabled"]]
+        }
+      },
+      "required": ["primaryTone", "coreValues"]
+    },
+    "callToAction": {
+      "description": "Desired participant action",
+      "type": "object",
+      "properties": {
+        "primaryAction": {
+          "description": "Main action for participants to take",
+          "type": "string",
+          "enum": [
+            "book_consultation",
+            "call_now",
+            "learn_more",
+            "register_interest",
+            "download_guide",
+            "join_waitlist",
+            "request_callback",
+            "view_services"
+          ]
+        },
+        "contactMethods": {
+          "description": "Available contact options",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["phone", "email", "online_form", "live_chat", "text_message"]
+          },
+          "minItems": 1
+        },
+        "urgency": {
+          "description": "Any time-sensitive elements",
+          "type": "string",
+          "examples": ["NDIS plan review coming up?", "Funding available now", "New NDIS pricing starts July 1"]
+        }
+      },
+      "required": ["primaryAction", "contactMethods"]
+    },
+    "complianceFlags": {
+      "description": "NDIS advertising compliance checklist",
+      "type": "object",
+      "properties": {
+        "includeRegistrationStatus": {
+          "description": "Mention NDIS registered provider status",
+          "type": "boolean",
+          "default": true
+        },
+        "ndisLogoUsage": {
+          "description": "Whether to include NDIS logo (must be registered to use)",
+          "type": "boolean",
+          "default": false
+        },
+        "practiceStandardsCompliant": {
+          "description": "Confirm alignment with NDIS Practice Standards",
+          "type": "boolean",
+          "default": true
+        },
+        "privacyStatementLink": {
+          "description": "Include link to privacy policy",
+          "type": "boolean",
+          "default": true
+        }
+      }
+    },
+    "mediaPreferences": {
+      "description": "Visual content preferences for disability sector",
+      "type": "object",
+      "properties": {
+        "imageStyle": {
+          "description": "Preferred visual representation approach",
+          "type": "string",
+          "enum": [
+            "authentic_participants",
+            "professional_staff",
+            "activities_lifestyle",
+            "illustrated_graphics",
+            "mixed_realistic"
+          ]
+        },
+        "diversityRepresentation": {
+          "description": "Ensure diverse representation",
+          "type": "object",
+          "properties": {
+            "includeVariousDisabilities": {
+              "type": "boolean",
+              "default": true
+            },
+            "culturalDiversity": {
+              "type": "boolean",
+              "default": true
+            },
+            "ageRangeDiversity": {
+              "type": "boolean",
+              "default": true
+            },
+            "genderDiversity": {
+              "type": "boolean",
+              "default": true
+            }
+          }
+        },
+        "placementPriority": {
+          "description": "Where to show ads (consider participant digital literacy)",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["feed", "stories", "messenger", "marketplace"]
+          },
+          "default": ["feed"]
+        }
+      },
+      "required": ["imageStyle", "placementPriority"]
+    },
+    "landingPage": {
+      "description": "Website URL (should be accessible WCAG 2.1 AA compliant)",
+      "type": "string",
+      "format": "uri",
+      "examples": [
+        "https://providername.com.au/ndis-services",
+        "https://providername.org.au/get-started"
+      ]
+    },
+    "budgetConsiderations": {
+      "description": "Campaign budget and reach preferences",
+      "type": "object",
+      "properties": {
+        "monthlyBudget": {
+          "description": "Approximate monthly ad spend in AUD",
+          "type": "string",
+          "enum": ["under_500", "500_1000", "1000_2500", "2500_5000", "over_5000"]
+        },
+        "campaignDuration": {
+          "description": "How long to run the campaign",
+          "type": "string",
+          "enum": ["ongoing", "1_month", "3_months", "6_months", "ndis_price_guide_cycle"]
+        }
+      }
+    }
+  },
+  "required": [
+    "providerDetails",
+    "targetParticipants",
+    "serviceOffering",
+    "accessibilityRequirements",
+    "messagingTone",
+    "callToAction",
+    "complianceFlags",
+    "mediaPreferences",
+    "landingPage"
+  ],
+  "examples": [
+    {
+      "providerDetails": {
+        "providerName": "Ability Connect WA",
+        "registrationNumber": "4050001234",
+        "serviceAreas": ["perth_metro", "mandurah", "rockingham"],
+        "registrationGroups": [
+          "0107_daily_personal_activities",
+          "0108_participation_community",
+          "0117_development_life_skills"
+        ]
+      },
+      "targetParticipants": {
+        "primaryDisabilityTypes": ["autism", "intellectual_disability", "developmental_delay"],
+        "ageGroups": ["children_7_14", "young_people_15_24"],
+        "culturalConsiderations": ["general_multicultural"],
+        "supportNeeds": ["standard", "high_intensity"]
+      },
+      "serviceOffering": {
+        "primaryService": "community_participation",
+        "keyFeatures": [
+          "After school programs available",
+          "Experienced autism specialists",
+          "Small group activities"
+        ],
+        "availabilityMessage": "accepting_new_participants",
+        "freeServices": "Free family consultation"
+      },
+      "accessibilityRequirements": {
+        "easyRead": true,
+        "includeAuslan": false,
+        "visualDescriptions": true,
+        "highContrast": true,
+        "captionsRequired": true
+      },
+      "messagingTone": {
+        "primaryTone": "empowering",
+        "coreValues": ["choice_and_control", "inclusion", "independence"],
+        "avoidTerms": ["special needs", "suffers from"]
+      },
+      "callToAction": {
+        "primaryAction": "book_consultation",
+        "contactMethods": ["phone", "online_form", "email"],
+        "urgency": "Spaces filling for Term 1 2025"
+      },
+      "complianceFlags": {
+        "includeRegistrationStatus": true,
+        "ndisLogoUsage": false,
+        "practiceStandardsCompliant": true,
+        "privacyStatementLink": true
+      },
+      "mediaPreferences": {
+        "imageStyle": "authentic_participants",
+        "diversityRepresentation": {
+          "includeVariousDisabilities": true,
+          "culturalDiversity": true,
+          "ageRangeDiversity": true,
+          "genderDiversity": true
+        },
+        "placementPriority": ["feed", "stories"]
+      },
+      "landingPage": "https://abilityconnectwa.com.au/community-programs",
+      "budgetConsiderations": {
+        "monthlyBudget": "1000_2500",
+        "campaignDuration": "3_months"
+      }
+    }
+  ]
+}
