@@ -14,7 +14,7 @@ import hashlib
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 from datetime import datetime
-from pydantic import BaseModel, Field, field_validator, validator
+from pydantic import BaseModel, Field, field_validator
 import re
 import os
 
@@ -51,45 +51,52 @@ class DeveloperConfig(BaseModel):
     class Config:
         extra = "forbid"  # Prevent unknown fields
 
-    @validator('llm_provider')
+    @field_validator('llm_provider')
+    @classmethod
     def validate_llm_provider(cls, v):
         valid_providers = ["openai", "anthropic", "local"]
         if v not in valid_providers:
             raise ValueError(f"Invalid LLM provider '{v}'. Valid options: {', '.join(valid_providers)}")
         return v
 
-    @validator('llm_base_url')
+    @field_validator('llm_base_url')
+    @classmethod
     def validate_base_url(cls, v):
         if v is not None and not (v.startswith('http://') or v.startswith('https://')):
             raise ValueError(f"Invalid base URL format '{v}'. Must start with http:// or https://")
         return v
 
-    @validator('request_timeout')
+    @field_validator('request_timeout')
+    @classmethod
     def validate_timeout(cls, v):
         if v < 1.0:
             raise ValueError(f"Request timeout must be >= 1.0 seconds, got {v}")
         return v
 
-    @validator('max_retries')
+    @field_validator('max_retries')
+    @classmethod
     def validate_max_retries(cls, v):
         if not (0 <= v <= 10):
             raise ValueError(f"Max retries must be between 0 and 10, got {v}")
         return v
 
-    @validator('retry_backoff_factor')
+    @field_validator('retry_backoff_factor')
+    @classmethod
     def validate_backoff_factor(cls, v):
         if not (1.0 <= v <= 5.0):
             raise ValueError(f"Retry backoff factor must be between 1.0 and 5.0, got {v}")
         return v
 
-    @validator('default_enhancement_level')
+    @field_validator('default_enhancement_level')
+    @classmethod
     def validate_enhancement_level(cls, v):
         valid_levels = ["minimal", "moderate", "comprehensive"]
         if v not in valid_levels:
             raise ValueError(f"Invalid enhancement level '{v}'. Valid options: {', '.join(valid_levels)}")
         return v
 
-    @validator('log_level')
+    @field_validator('log_level')
+    @classmethod
     def validate_log_level(cls, v):
         valid_levels = ["DEBUG", "INFO", "WARNING", "ERROR"]
         if v not in valid_levels:
@@ -348,7 +355,8 @@ class LLMResponse(BaseModel):
     alternatives: List[Dict[str, Any]] = Field(default_factory=list)
     processing_time: float
 
-    @validator('confidence_score')
+    @field_validator('confidence_score')
+    @classmethod
     def validate_confidence(cls, v):
         return max(0.0, min(1.0, v))
 
@@ -566,7 +574,8 @@ class GapItem(BaseModel):
     enhancement_suggestion: Optional[str] = None
     estimated_improvement: float = Field(..., ge=0.0, le=1.0)
 
-    @validator('impact')
+    @field_validator('impact')
+    @classmethod
     def validate_impact(cls, v):
         valid_impacts = ["low", "medium", "high", "critical"]
         if v not in valid_impacts:
