@@ -106,14 +106,15 @@ class LLMEnhancementEngine:
         self.model = model
         self.enable_caching = enable_caching
         self.timeout = timeout
-        self._cache = {} if enable_caching else None
+        self._cache: Dict[str, LLMResponse] = {}
 
     def process_request(self, request: LLMRequest) -> LLMResponse:
         """Process an LLM request and return response."""
         start_time = time.time()
 
         try:
-            # Check cache first
+            # Generate cache key if caching is enabled
+            cache_key = None
             if self.enable_caching:
                 cache_key = self._get_cache_key(request)
                 if cache_key in self._cache:
@@ -126,7 +127,7 @@ class LLMEnhancementEngine:
             response.processing_time = time.time() - start_time
 
             # Cache the response
-            if self.enable_caching:
+            if self.enable_caching and cache_key is not None:
                 self._cache[cache_key] = response
 
             return response
@@ -597,15 +598,15 @@ def read_brand_markdown(file_path: str) -> Dict[str, Any]:
             content = f.read()
 
         # Basic parsing - extract brand name and content sections
-        brand_data = {"raw_content": content}
+        brand_data: Dict[str, Any] = {"raw_content": content}
 
         # Extract brand name
         name_match = re.search(r'Brand Name:\s*(.+)', content, re.IGNORECASE)
         if name_match:
             brand_data["brand_name"] = name_match.group(1).strip()
 
-        # Extract colors
-        colors = re.findall(r'(?:Primary|Secondary):\s*(.+)', content, re.IGNORECASE)
+        # Extract colors - store as list of color descriptions
+        colors: List[str] = re.findall(r'(?:Primary|Secondary):\s*(.+)', content, re.IGNORECASE)
         if colors:
             brand_data["colors"] = colors
 
