@@ -1,0 +1,92 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Brand Identity Generator Output (Agent Envelope)",
+  "type": "object",
+  "required": ["meta", "input", "output"],
+  "properties": {
+    "meta": {
+      "type": "object",
+      "description": "Agent execution metadata",
+      "required": ["agent", "version", "trace_id", "ts", "brand_token", "hash", "cost"],
+      "properties": {
+        "agent": {
+          "type": "string",
+          "const": "brand_identity_generator"
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$",
+          "description": "SemVer version of the agent"
+        },
+        "trace_id": {
+          "type": "string",
+          "description": "Unique execution identifier"
+        },
+        "ts": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO-8601 execution timestamp"
+        },
+        "brand_token": {
+          "type": "string",
+          "description": "Brand configuration token"
+        },
+        "hash": {
+          "type": "string",
+          "description": "SHA256 hash of the output content"
+        },
+        "cost": {
+          "type": "object",
+          "description": "Execution cost metrics",
+          "required": ["tokens_in", "tokens_out", "usd"],
+          "properties": {
+            "tokens_in": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "tokens_out": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "usd": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false
+        },
+        "prompt_id": {
+          "type": "string",
+          "description": "Optional prompt identifier"
+        },
+        "prompt_hash": {
+          "type": "string",
+          "description": "Optional SHA256 hash of the prompt"
+        }
+      },
+      "additionalProperties": false
+    },
+    "input": {
+      "type": "object",
+      "description": "The brand identity input provided to the agent"
+    },
+    "output": {
+      "type": "object",
+      "description": "Generated brand identity with enhanced components",
+      "properties": {
+        "brand_identity": {
+          "$ref": "../input.json",
+          "description": "Enhanced brand identity following the brand schema"
+        }
+      },
+      "required": ["brand_identity"],
+      "additionalProperties": false
+    },
+    "error": {
+      "type": ["string", "null"],
+      "description": "Error message if execution failed, null if successful",
+      "default": null
+    }
+  },
+  "additionalProperties": false
+}

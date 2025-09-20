@@ -30,7 +30,7 @@ Traits: professional, innovative, trustworthy
     try:
         # Run with enhancement flag
         result = subprocess.run([
-            'python', 'brand_identity_generator.py',
+            'python', 'agents/brand_identity_generator/brand_identity_generator.py',
             input_file, '--enhance'
         ], capture_output=True, text=True)
 
@@ -69,7 +69,7 @@ Primary: blue
     try:
         for level in ['minimal', 'moderate', 'comprehensive']:
             result = subprocess.run([
-                'python', 'brand_identity_generator.py',
+                'python', 'agents/brand_identity_generator/brand_identity_generator.py',
                 input_file, '--enhance', '--enhancement-level', level
             ], capture_output=True, text=True)
 
@@ -94,7 +94,7 @@ Primary: blue
     try:
         for provider in ['openai', 'anthropic', 'local']:
             result = subprocess.run([
-                'python', 'brand_identity_generator.py',
+                'python', 'agents/brand_identity_generator/brand_identity_generator.py',
                 input_file, '--enhance', '--llm-provider', provider
             ], capture_output=True, text=True)
 
@@ -110,7 +110,7 @@ Primary: blue
 def test_enhance_flag_without_input_fails():
     """Test that --enhance flag requires input file."""
     result = subprocess.run([
-        'python', 'brand_identity_generator.py', '--enhance'
+        'python', 'agents/brand_identity_generator/brand_identity_generator.py', '--enhance'
     ], capture_output=True, text=True)
 
     # Should fail gracefully
@@ -120,7 +120,7 @@ def test_enhance_flag_without_input_fails():
 def test_enhance_flag_with_invalid_file_fails():
     """Test that --enhance flag fails gracefully with invalid input."""
     result = subprocess.run([
-        'python', 'brand_identity_generator.py',
+        'python', 'agents/brand_identity_generator/brand_identity_generator.py',
         'nonexistent.md', '--enhance'
     ], capture_output=True, text=True)
 
@@ -140,7 +140,7 @@ Primary: blue
     try:
         # Run without enhancement (standard mode)
         standard_result = subprocess.run([
-            'python', 'brand_identity_generator.py', input_file
+            'python', 'agents/brand_identity_generator/brand_identity_generator.py', input_file
         ], capture_output=True, text=True)
 
         assert standard_result.returncode == 0
@@ -148,7 +148,7 @@ Primary: blue
 
         # Run with enhancement
         enhanced_result = subprocess.run([
-            'python', 'brand_identity_generator.py',
+            'python', 'agents/brand_identity_generator/brand_identity_generator.py',
             input_file, '--enhance'
         ], capture_output=True, text=True)
 
@@ -182,7 +182,7 @@ Primary: blue
 
     try:
         result = subprocess.run([
-            'python', 'brand_identity_generator.py',
+            'python', 'agents/brand_identity_generator/brand_identity_generator.py',
             input_file, '--enhance', '-o', output_file
         ], capture_output=True, text=True)
 

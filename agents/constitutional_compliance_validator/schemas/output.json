@@ -1,0 +1,128 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Constitutional Compliance Validator Output (Agent Envelope)",
+  "type": "object",
+  "required": ["meta", "input", "output"],
+  "properties": {
+    "meta": {
+      "type": "object",
+      "description": "Agent execution metadata",
+      "required": ["agent", "version", "trace_id", "ts", "brand_token", "hash", "cost"],
+      "properties": {
+        "agent": {
+          "type": "string",
+          "const": "constitutional_compliance_validator"
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$",
+          "description": "SemVer version of the agent"
+        },
+        "trace_id": {
+          "type": "string",
+          "description": "Unique execution identifier"
+        },
+        "ts": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO-8601 execution timestamp"
+        },
+        "brand_token": {
+          "type": "string",
+          "description": "Brand configuration token"
+        },
+        "hash": {
+          "type": "string",
+          "description": "SHA256 hash of the output content"
+        },
+        "cost": {
+          "type": "object",
+          "description": "Execution cost metrics",
+          "required": ["tokens_in", "tokens_out", "usd"],
+          "properties": {
+            "tokens_in": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "tokens_out": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "usd": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "input": {
+      "type": "object",
+      "description": "The validation input provided to the agent"
+    },
+    "output": {
+      "type": "object",
+      "description": "Constitutional compliance validation results",
+      "required": ["compliant", "score", "violations", "recommendations"],
+      "properties": {
+        "compliant": {
+          "type": "boolean",
+          "description": "Whether the file passes constitutional compliance"
+        },
+        "score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Overall compliance score (0-100)"
+        },
+        "violations": {
+          "type": "array",
+          "description": "List of constitutional violations found",
+          "items": {
+            "type": "object",
+            "required": ["article", "rule", "severity", "description"],
+            "properties": {
+              "article": {
+                "type": "string",
+                "description": "Constitution article violated"
+              },
+              "rule": {
+                "type": "string",
+                "description": "Specific rule violated"
+              },
+              "severity": {
+                "type": "string",
+                "enum": ["critical", "major", "minor", "warning"],
+                "description": "Severity level of the violation"
+              },
+              "description": {
+                "type": "string",
+                "description": "Human-readable description of the violation"
+              },
+              "line_number": {
+                "type": "integer",
+                "description": "Line number where violation occurs (if applicable)"
+              }
+            }
+          }
+        },
+        "recommendations": {
+          "type": "array",
+          "description": "Recommendations for achieving compliance",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "error": {
+      "type": ["string", "null"],
+      "description": "Error message if execution failed, null if successful",
+      "default": null
+    }
+  },
+  "additionalProperties": false
+}

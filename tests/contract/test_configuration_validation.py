@@ -28,13 +28,13 @@ Description: A test brand
             # This test will initially fail because configuration validation is not implemented
             # We expect the current tool to work without configuration validation
             result = subprocess.run([
-                'python', 'brand_identity_generator.py',
+                'python', 'agents/brand_identity_generator/brand_identity_generator.py',
                 input_file, '--enhance'
             ], capture_output=True, text=True)
 
             # For now, just verify the tool runs (before configuration is implemented)
             # After implementation, this should test invalid provider handling
-            if 'DeveloperConfig' not in open('brand_identity_generator.py').read():
+            if 'DeveloperConfig' not in open('agents/brand_identity_generator/brand_identity_generator.py').read():
                 pytest.skip("Configuration system not implemented yet - test should fail initially")
 
             # When implemented, should test something like:
@@ -48,7 +48,7 @@ Description: A test brand
     def test_invalid_timeout_value_validation(self):
         """Test that invalid timeout values are caught with helpful messages."""
         # This test will initially fail - should be implemented after configuration system
-        if 'DeveloperConfig' not in open('brand_identity_generator.py').read():
+        if 'DeveloperConfig' not in open('agents/brand_identity_generator/brand_identity_generator.py').read():
             pytest.skip("Configuration system not implemented yet - test should fail initially")
 
         # When implemented, should test timeout validation
@@ -58,7 +58,7 @@ Description: A test brand
     def test_invalid_directory_path_validation(self):
         """Test that invalid directory paths show helpful error messages."""
         # This test will initially fail - should be implemented after configuration system
-        if 'DeveloperConfig' not in open('brand_identity_generator.py').read():
+        if 'DeveloperConfig' not in open('agents/brand_identity_generator/brand_identity_generator.py').read():
             pytest.skip("Configuration system not implemented yet - test should fail initially")
 
         # When implemented, should test directory validation
@@ -68,7 +68,7 @@ Description: A test brand
     def test_configuration_validation_on_startup(self):
         """Test that configuration is validated on application startup."""
         # This test will initially fail - should be implemented after configuration system
-        if 'DeveloperConfig' not in open('brand_identity_generator.py').read():
+        if 'DeveloperConfig' not in open('agents/brand_identity_generator/brand_identity_generator.py').read():
             pytest.skip("Configuration system not implemented yet - test should fail initially")
 
         # When implemented, should test startup validation
@@ -77,7 +77,7 @@ Description: A test brand
     def test_error_message_includes_setting_name_and_value(self):
         """Test that error messages include setting name and invalid value."""
         # This test will initially fail - should be implemented after configuration system
-        if 'DeveloperConfig' not in open('brand_identity_generator.py').read():
+        if 'DeveloperConfig' not in open('agents/brand_identity_generator/brand_identity_generator.py').read():
             pytest.skip("Configuration system not implemented yet - test should fail initially")
 
         # When implemented, should test error message format
@@ -91,7 +91,7 @@ Description: A test brand
     def test_critical_errors_stop_execution(self):
         """Test that critical configuration errors stop execution immediately."""
         # This test will initially fail - should be implemented after configuration system
-        if 'DeveloperConfig' not in open('brand_identity_generator.py').read():
+        if 'DeveloperConfig' not in open('agents/brand_identity_generator/brand_identity_generator.py').read():
             pytest.skip("Configuration system not implemented yet - test should fail initially")
 
         # When implemented, should test critical error handling
@@ -101,7 +101,7 @@ Description: A test brand
     def test_recoverable_errors_show_warnings(self):
         """Test that recoverable errors show warnings but allow operation."""
         # This test will initially fail - should be implemented after configuration system
-        if 'DeveloperConfig' not in open('brand_identity_generator.py').read():
+        if 'DeveloperConfig' not in open('agents/brand_identity_generator/brand_identity_generator.py').read():
             pytest.skip("Configuration system not implemented yet - test should fail initially")
 
         # When implemented, should test warning behavior
@@ -111,7 +111,7 @@ Description: A test brand
     def test_error_messages_provide_specific_suggestions(self):
         """Test that error messages provide concrete steps to fix issues."""
         # This test will initially fail - should be implemented after configuration system
-        if 'DeveloperConfig' not in open('brand_identity_generator.py').read():
+        if 'DeveloperConfig' not in open('agents/brand_identity_generator/brand_identity_generator.py').read():
             pytest.skip("Configuration system not implemented yet - test should fail initially")
 
         # When implemented, should test suggestion quality
@@ -121,7 +121,7 @@ Description: A test brand
     def test_validation_includes_acceptable_values(self):
         """Test that validation errors include examples of acceptable values."""
         # This test will initially fail - should be implemented after configuration system
-        if 'DeveloperConfig' not in open('brand_identity_generator.py').read():
+        if 'DeveloperConfig' not in open('agents/brand_identity_generator/brand_identity_generator.py').read():
             pytest.skip("Configuration system not implemented yet - test should fail initially")
 
         # When implemented, should test value examples in errors

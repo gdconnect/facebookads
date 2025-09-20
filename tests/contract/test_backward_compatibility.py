@@ -34,7 +34,7 @@ Traits: professional, innovative
         try:
             # Test basic enhancement
             result = subprocess.run([
-                'python', 'brand_identity_generator.py',
+                'python', 'agents/brand_identity_generator/brand_identity_generator.py',
                 input_file, '--enhance'
             ], capture_output=True, text=True)
 
@@ -45,7 +45,7 @@ Traits: professional, innovative
 
             # Test gap analysis
             result = subprocess.run([
-                'python', 'brand_identity_generator.py',
+                'python', 'agents/brand_identity_generator/brand_identity_generator.py',
                 input_file, '--analyze-gaps'
             ], capture_output=True, text=True)
 
@@ -55,7 +55,7 @@ Traits: professional, innovative
 
             # Test provider switching
             result = subprocess.run([
-                'python', 'brand_identity_generator.py',
+                'python', 'agents/brand_identity_generator/brand_identity_generator.py',
                 input_file, '--enhance', '--llm-provider', 'anthropic'
             ], capture_output=True, text=True)
 
@@ -65,7 +65,7 @@ Traits: professional, innovative
 
             # Test enhancement levels
             result = subprocess.run([
-                'python', 'brand_identity_generator.py',
+                'python', 'agents/brand_identity_generator/brand_identity_generator.py',
                 input_file, '--enhance', '--enhancement-level', 'comprehensive'
             ], capture_output=True, text=True)
 
@@ -80,7 +80,7 @@ Traits: professional, innovative
         """Test that CLI arguments override configuration values."""
         # This test will initially pass (no config to override)
         # After configuration implementation, should test precedence
-        if 'DeveloperConfig' not in open('brand_identity_generator.py').read():
+        if 'DeveloperConfig' not in open('agents/brand_identity_generator/brand_identity_generator.py').read():
             pytest.skip("Configuration system not implemented yet - precedence testing needs config")
 
         # Test CLI argument precedence over configuration defaults
@@ -97,7 +97,7 @@ Primary: professional blue
         try:
             # Test that CLI --llm-provider overrides configuration default
             result = subprocess.run([
-                'python', 'brand_identity_generator.py',
+                'python', 'agents/brand_identity_generator/brand_identity_generator.py',
                 input_file, '--enhance', '--llm-provider', 'anthropic'
             ], capture_output=True, text=True)
 
@@ -131,7 +131,7 @@ Primary: blue
 
             try:
                 result = subprocess.run([
-                    'python', 'brand_identity_generator.py',
+                    'python', 'agents/brand_identity_generator/brand_identity_generator.py',
                     input_file, '--enhance'
                 ], capture_output=True, text=True)
 
@@ -161,7 +161,7 @@ Primary: professional blue
 
         try:
             result = subprocess.run([
-                'python', 'brand_identity_generator.py',
+                'python', 'agents/brand_identity_generator/brand_identity_generator.py',
                 input_file, '--enhance'
             ], capture_output=True, text=True)
 
@@ -181,19 +181,19 @@ Primary: professional blue
     def test_help_text_shows_configuration_defaults(self):
         """Test that help text shows current configuration defaults."""
         result = subprocess.run([
-            'python', 'brand_identity_generator.py', '--help'
+            'python', 'agents/brand_identity_generator/brand_identity_generator.py', '--help'
         ], capture_output=True, text=True)
 
         assert result.returncode == 0
         help_text = result.stdout
 
         # Basic help text should be present
-        assert 'brand_identity_generator.py' in help_text
+        assert 'agents/brand_identity_generator/brand_identity_generator.py' in help_text
         assert '--enhance' in help_text
         assert '--llm-provider' in help_text
 
         # After configuration implementation, should show config defaults
-        if 'DeveloperConfig' not in open('brand_identity_generator.py').read():
+        if 'DeveloperConfig' not in open('agents/brand_identity_generator/brand_identity_generator.py').read():
             pytest.skip("Configuration system not implemented yet - help text enhancement pending")
 
         # When implemented, should test config defaults in help
@@ -216,7 +216,7 @@ Primary: professional blue
         try:
             # Test session save
             result = subprocess.run([
-                'python', 'brand_identity_generator.py',
+                'python', 'agents/brand_identity_generator/brand_identity_generator.py',
                 input_file, '--enhance', '--save-session', session_file
             ], capture_output=True, text=True)
 
@@ -225,7 +225,7 @@ Primary: professional blue
 
             # Test session load
             result = subprocess.run([
-                'python', 'brand_identity_generator.py',
+                'python', 'agents/brand_identity_generator/brand_identity_generator.py',
                 '--load-session', session_file
             ], capture_output=True, text=True)
 
@@ -242,7 +242,7 @@ Primary: professional blue
         """Test that existing error handling behaviors are preserved."""
         # Test missing input file
         result = subprocess.run([
-            'python', 'brand_identity_generator.py',
+            'python', 'agents/brand_identity_generator/brand_identity_generator.py',
             'nonexistent.md', '--enhance'
         ], capture_output=True, text=True)
 
@@ -255,7 +255,7 @@ Primary: professional blue
 
         try:
             result = subprocess.run([
-                'python', 'brand_identity_generator.py',
+                'python', 'agents/brand_identity_generator/brand_identity_generator.py',
                 input_file, '--enhance', '--enhancement-level', 'invalid'
             ], capture_output=True, text=True)
 

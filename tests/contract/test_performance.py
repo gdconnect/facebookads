@@ -19,7 +19,7 @@ class TestPerformance:
         """Test that configuration loading completes in <10ms."""
         # This test will initially pass (no config loading overhead)
         # After configuration implementation, should test actual loading time
-        if 'DeveloperConfig' not in open('brand_identity_generator.py').read():
+        if 'DeveloperConfig' not in open('agents/brand_identity_generator/brand_identity_generator.py').read():
             pytest.skip("Configuration system not implemented yet - performance testing needs config")
 
         # When implemented, should test configuration loading performance
@@ -46,7 +46,7 @@ Traits: professional, innovative
             # Measure baseline performance
             start_time = time.time()
             result = subprocess.run([
-                'python', 'brand_identity_generator.py',
+                'python', 'agents/brand_identity_generator/brand_identity_generator.py',
                 input_file, '--enhance'
             ], capture_output=True, text=True)
             baseline_time = time.time() - start_time
@@ -54,7 +54,7 @@ Traits: professional, innovative
             assert result.returncode == 0, f"Enhancement failed: {result.stderr}"
 
             # After configuration implementation, performance should not degrade
-            if 'DeveloperConfig' not in open('brand_identity_generator.py').read():
+            if 'DeveloperConfig' not in open('agents/brand_identity_generator/brand_identity_generator.py').read():
                 # Store baseline for future comparison
                 assert baseline_time < 10.0, f"Baseline performance too slow: {baseline_time}s"
                 pytest.skip("Configuration system not implemented yet - runtime overhead testing needs config")
@@ -68,7 +68,7 @@ Traits: professional, innovative
     def test_configuration_validation_is_fast(self):
         """Test that configuration validation is fast even with invalid values."""
         # This test will initially fail - should be implemented after configuration system
-        if 'DeveloperConfig' not in open('brand_identity_generator.py').read():
+        if 'DeveloperConfig' not in open('agents/brand_identity_generator/brand_identity_generator.py').read():
             pytest.skip("Configuration system not implemented yet - validation performance testing needs config")
 
         # When implemented, should test validation speed
@@ -77,7 +77,7 @@ Traits: professional, innovative
     def test_directory_validation_caching_performance(self):
         """Test that directory validation caching provides performance benefits."""
         # This test will initially fail - should be implemented after configuration system
-        if 'DeveloperConfig' not in open('brand_identity_generator.py').read():
+        if 'DeveloperConfig' not in open('agents/brand_identity_generator/brand_identity_generator.py').read():
             pytest.skip("Configuration system not implemented yet - caching performance testing needs config")
 
         # When implemented, should test caching performance benefits
@@ -86,7 +86,7 @@ Traits: professional, innovative
     def test_environment_variable_resolution_is_cached(self):
         """Test that environment variable resolution is cached for performance."""
         # This test will initially fail - should be implemented after configuration system
-        if 'DeveloperConfig' not in open('brand_identity_generator.py').read():
+        if 'DeveloperConfig' not in open('agents/brand_identity_generator/brand_identity_generator.py').read():
             pytest.skip("Configuration system not implemented yet - env var caching testing needs config")
 
         # When implemented, should test env var caching
@@ -108,7 +108,7 @@ Primary: blue
             # Test gap analysis performance
             start_time = time.time()
             result = subprocess.run([
-                'python', 'brand_identity_generator.py',
+                'python', 'agents/brand_identity_generator/brand_identity_generator.py',
                 input_file, '--analyze-gaps'
             ], capture_output=True, text=True)
             gap_time = time.time() - start_time
@@ -119,7 +119,7 @@ Primary: blue
             # Test enhancement performance
             start_time = time.time()
             result = subprocess.run([
-                'python', 'brand_identity_generator.py',
+                'python', 'agents/brand_identity_generator/brand_identity_generator.py',
                 input_file, '--enhance'
             ], capture_output=True, text=True)
             enhance_time = time.time() - start_time

@@ -28,4 +28,24 @@ Thumbs.db
 *.log
 .env
 .env.local
-session-*.jsonsessions/
+
+# Runtime and output files - prevent test artifacts from cluttering root
+*.json
+!**/schemas/*.json
+!**/examples/*.json
+!package*.json
+!pyproject.toml
+output/
+sessions/
+cache/
+*_report.json
+*_test.json
+test_*.json
+validation-*.json
+self_validation_*.json
+customer_journey.json
+test_journey.json
+
+# Validation test logs
+validation-tests/logs/
+validation-tests/*.log

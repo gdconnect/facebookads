@@ -24,7 +24,7 @@ Primary: blue
     try:
         # Interactive without enhance should still work but have limited functionality
         result = subprocess.run([
-            'python', 'brand_identity_generator.py',
+            'python', 'agents/brand_identity_generator/brand_identity_generator.py',
             input_file, '--interactive'
         ], capture_output=True, text=True, timeout=5)
 
@@ -48,7 +48,7 @@ Primary: professional blue
         # Mock interactive input to auto-accept suggestions
         with patch('builtins.input', return_value='A'):
             result = subprocess.run([
-                'python', 'brand_identity_generator.py',
+                'python', 'agents/brand_identity_generator/brand_identity_generator.py',
                 input_file, '--enhance', '--interactive'
             ], capture_output=True, text=True, timeout=10)
 
@@ -82,7 +82,7 @@ Primary: blue
         # Save session
         with patch('builtins.input', return_value='A'):
             result = subprocess.run([
-                'python', 'brand_identity_generator.py',
+                'python', 'agents/brand_identity_generator/brand_identity_generator.py',
                 input_file, '--enhance', '--interactive',
                 '--save-session', session_file
             ], capture_output=True, text=True, timeout=10)
@@ -104,7 +104,7 @@ Primary: blue
 
         # Load session
         result = subprocess.run([
-            'python', 'brand_identity_generator.py',
+            'python', 'agents/brand_identity_generator/brand_identity_generator.py',
             '--load-session', session_file
         ], capture_output=True, text=True, timeout=10)
 
@@ -130,7 +130,7 @@ Secondary: orange
         input_text = "A\nM\nwarmer orange\nA\n"
 
         result = subprocess.run([
-            'python', 'brand_identity_generator.py',
+            'python', 'agents/brand_identity_generator/brand_identity_generator.py',
             input_file, '--enhance', '--interactive'
         ], capture_output=True, text=True, input=input_text, timeout=15)
 
@@ -158,7 +158,7 @@ Primary: blue
         # Don't mock input to test timeout behavior
         start_time = time.time()
         result = subprocess.run([
-            'python', 'brand_identity_generator.py',
+            'python', 'agents/brand_identity_generator/brand_identity_generator.py',
             input_file, '--enhance', '--interactive'
         ], capture_output=True, text=True, timeout=3, input='\n')
 
@@ -190,7 +190,7 @@ Primary: blue
     try:
         with patch('builtins.input', return_value='A'):
             result = subprocess.run([
-                'python', 'brand_identity_generator.py',
+                'python', 'agents/brand_identity_generator/brand_identity_generator.py',
                 input_file, '--enhance', '--interactive',
                 '-o', output_file
             ], capture_output=True, text=True, timeout=10)
@@ -225,7 +225,7 @@ Primary: blue
         for provider in ['openai', 'anthropic']:
             with patch('builtins.input', return_value='A'):
                 result = subprocess.run([
-                    'python', 'brand_identity_generator.py',
+                    'python', 'agents/brand_identity_generator/brand_identity_generator.py',
                     input_file, '--enhance', '--interactive',
                     '--llm-provider', provider
                 ], capture_output=True, text=True, timeout=10)
@@ -252,7 +252,7 @@ Primary: blue
         for level in ['minimal', 'moderate', 'comprehensive']:
             with patch('builtins.input', return_value='A'):
                 result = subprocess.run([
-                    'python', 'brand_identity_generator.py',
+                    'python', 'agents/brand_identity_generator/brand_identity_generator.py',
                     input_file, '--enhance', '--interactive',
                     '--enhancement-level', level
                 ], capture_output=True, text=True, timeout=10)
@@ -270,7 +270,7 @@ def test_interactive_enhancement_error_handling():
     """Test interactive enhancement error handling."""
     # Test with invalid input file
     result = subprocess.run([
-        'python', 'brand_identity_generator.py',
+        'python', 'agents/brand_identity_generator/brand_identity_generator.py',
         'nonexistent.md', '--enhance', '--interactive'
     ], capture_output=True, text=True, timeout=5)
 
@@ -294,7 +294,7 @@ Traits: professional, innovative
     try:
         with patch('builtins.input', return_value='A'):
             result = subprocess.run([
-                'python', 'brand_identity_generator.py',
+                'python', 'agents/brand_identity_generator/brand_identity_generator.py',
                 input_file, '--enhance', '--interactive', '--design-strategy'
             ], capture_output=True, text=True, timeout=10)
 

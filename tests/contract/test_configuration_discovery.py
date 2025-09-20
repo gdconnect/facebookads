@@ -14,8 +14,8 @@ class TestConfigurationDiscovery:
 
     def test_configuration_section_prominently_located(self):
         """Test that configuration section is prominently located at top of file."""
-        # Read the brand_identity_generator.py file
-        with open('brand_identity_generator.py', 'r') as f:
+        # Read the agents/brand_identity_generator/brand_identity_generator.py file
+        with open('agents/brand_identity_generator/brand_identity_generator.py', 'r') as f:
             content = f.read()
 
         # Look for configuration section in first 1000 characters after imports
@@ -42,7 +42,7 @@ class TestConfigurationDiscovery:
 
     def test_developer_config_class_exists(self):
         """Test that DeveloperConfig class exists in configuration section."""
-        with open('brand_identity_generator.py', 'r') as f:
+        with open('agents/brand_identity_generator/brand_identity_generator.py', 'r') as f:
             content = f.read()
 
         # Look for DeveloperConfig class definition
@@ -51,7 +51,7 @@ class TestConfigurationDiscovery:
 
     def test_all_required_configuration_settings_present(self):
         """Test that all required configuration settings are present."""
-        with open('brand_identity_generator.py', 'r') as f:
+        with open('agents/brand_identity_generator/brand_identity_generator.py', 'r') as f:
             content = f.read()
 
         required_settings = [
@@ -76,7 +76,7 @@ class TestConfigurationDiscovery:
 
     def test_configuration_section_has_clear_header(self):
         """Test that configuration section has clear header with instructions."""
-        with open('brand_identity_generator.py', 'r') as f:
+        with open('agents/brand_identity_generator/brand_identity_generator.py', 'r') as f:
             content = f.read()
 
         # Look for header comment block
@@ -86,7 +86,7 @@ class TestConfigurationDiscovery:
 
     def test_inline_documentation_quality(self):
         """Test that each configuration setting has clear inline documentation."""
-        with open('brand_identity_generator.py', 'r') as f:
+        with open('agents/brand_identity_generator/brand_identity_generator.py', 'r') as f:
             content = f.read()
 
         # Extract DeveloperConfig class section
@@ -124,7 +124,7 @@ class TestConfigurationDiscovery:
 
     def test_configuration_defaults_are_sensible(self):
         """Test that configuration defaults are appropriate for development."""
-        with open('brand_identity_generator.py', 'r') as f:
+        with open('agents/brand_identity_generator/brand_identity_generator.py', 'r') as f:
             content = f.read()
 
         if 'class DeveloperConfig(' not in content:

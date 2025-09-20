@@ -31,11 +31,11 @@ Primary: professional blue
             # This test will initially work with existing CLI provider switching
             # After configuration implementation, should test config-based switching
             result = subprocess.run([
-                'python', 'brand_identity_generator.py',
+                'python', 'agents/brand_identity_generator/brand_identity_generator.py',
                 input_file, '--enhance', '--llm-provider', 'anthropic'
             ], capture_output=True, text=True)
 
-            if 'DeveloperConfig' not in open('brand_identity_generator.py').read():
+            if 'DeveloperConfig' not in open('agents/brand_identity_generator/brand_identity_generator.py').read():
                 # Before implementation - verify CLI provider switching works
                 assert result.returncode == 0
                 output = json.loads(result.stdout)
@@ -51,7 +51,7 @@ Primary: professional blue
     def test_custom_api_endpoint_support(self):
         """Test that custom llm_base_url overrides provider defaults."""
         # This test will initially fail - should be implemented after configuration system
-        if 'DeveloperConfig' not in open('brand_identity_generator.py').read():
+        if 'DeveloperConfig' not in open('agents/brand_identity_generator/brand_identity_generator.py').read():
             pytest.skip("Configuration system not implemented yet - test should fail initially")
 
         # When implemented, should test custom endpoint usage
@@ -60,7 +60,7 @@ Primary: professional blue
     def test_model_selection_configuration(self):
         """Test that llm_model configuration is used for all enhancement requests."""
         # This test will initially fail - should be implemented after configuration system
-        if 'DeveloperConfig' not in open('brand_identity_generator.py').read():
+        if 'DeveloperConfig' not in open('agents/brand_identity_generator/brand_identity_generator.py').read():
             pytest.skip("Configuration system not implemented yet - test should fail initially")
 
         # When implemented, should test model selection
@@ -69,7 +69,7 @@ Primary: professional blue
     def test_provider_specific_defaults(self):
         """Test that provider-specific defaults are applied correctly."""
         # This test will initially fail - should be implemented after configuration system
-        if 'DeveloperConfig' not in open('brand_identity_generator.py').read():
+        if 'DeveloperConfig' not in open('agents/brand_identity_generator/brand_identity_generator.py').read():
             pytest.skip("Configuration system not implemented yet - test should fail initially")
 
         # When implemented, should test provider defaults
@@ -79,7 +79,7 @@ Primary: professional blue
     def test_api_key_environment_variable_support(self):
         """Test that API keys are loaded from environment variables."""
         # This test will initially fail - should be implemented after configuration system
-        if 'DeveloperConfig' not in open('brand_identity_generator.py').read():
+        if 'DeveloperConfig' not in open('agents/brand_identity_generator/brand_identity_generator.py').read():
             pytest.skip("Configuration system not implemented yet - test should fail initially")
 
         # When implemented, should test env var API key loading
@@ -89,7 +89,7 @@ Primary: professional blue
     def test_custom_base_url_environment_variable(self):
         """Test that custom base URLs can be set via environment variables."""
         # This test will initially fail - should be implemented after configuration system
-        if 'DeveloperConfig' not in open('brand_identity_generator.py').read():
+        if 'DeveloperConfig' not in open('agents/brand_identity_generator/brand_identity_generator.py').read():
             pytest.skip("Configuration system not implemented yet - test should fail initially")
 
         # When implemented, should test env var base URL override
@@ -99,7 +99,7 @@ Primary: professional blue
     def test_provider_validation(self):
         """Test that invalid providers are rejected with clear errors."""
         # This test will initially fail - should be implemented after configuration system
-        if 'DeveloperConfig' not in open('brand_identity_generator.py').read():
+        if 'DeveloperConfig' not in open('agents/brand_identity_generator/brand_identity_generator.py').read():
             pytest.skip("Configuration system not implemented yet - test should fail initially")
 
         # When implemented, should test provider validation
@@ -109,7 +109,7 @@ Primary: professional blue
     def test_url_format_validation(self):
         """Test that custom base URLs are validated for proper format."""
         # This test will initially fail - should be implemented after configuration system
-        if 'DeveloperConfig' not in open('brand_identity_generator.py').read():
+        if 'DeveloperConfig' not in open('agents/brand_identity_generator/brand_identity_generator.py').read():
             pytest.skip("Configuration system not implemented yet - test should fail initially")
 
         # When implemented, should test URL format validation
@@ -119,7 +119,7 @@ Primary: professional blue
     def test_timeout_configuration_applied(self):
         """Test that configured timeout values are applied to LLM requests."""
         # This test will initially fail - should be implemented after configuration system
-        if 'DeveloperConfig' not in open('brand_identity_generator.py').read():
+        if 'DeveloperConfig' not in open('agents/brand_identity_generator/brand_identity_generator.py').read():
             pytest.skip("Configuration system not implemented yet - test should fail initially")
 
         # When implemented, should test timeout application

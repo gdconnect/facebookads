@@ -18,7 +18,7 @@ class TestDirectoryManagement:
     def test_automatic_directory_creation(self):
         """Test that configured directories are created automatically."""
         # This test will initially fail - should be implemented after configuration system
-        if 'DeveloperConfig' not in open('brand_identity_generator.py').read():
+        if 'DeveloperConfig' not in open('agents/brand_identity_generator/brand_identity_generator.py').read():
             pytest.skip("Configuration system not implemented yet - test should fail initially")
 
         # Test directory creation with unique temporary directories
@@ -45,7 +45,7 @@ Primary: professional blue
             try:
                 # Test that tool creates missing directories automatically
                 result = subprocess.run([
-                    'python', 'brand_identity_generator.py',
+                    'python', 'agents/brand_identity_generator/brand_identity_generator.py',
                     input_file, '--enhance'
                 ], capture_output=True, text=True, env={
                     **os.environ,
@@ -70,7 +70,7 @@ Primary: professional blue
     def test_write_permission_validation(self):
         """Test that write permissions are validated with test file creation."""
         # This test will initially fail - should be implemented after configuration system
-        if 'DeveloperConfig' not in open('brand_identity_generator.py').read():
+        if 'DeveloperConfig' not in open('agents/brand_identity_generator/brand_identity_generator.py').read():
             pytest.skip("Configuration system not implemented yet - test should fail initially")
 
         # When implemented, should test permission validation
@@ -93,11 +93,11 @@ Primary: professional blue
             # This test will initially pass with default behavior
             # After configuration implementation, should test custom output directory
             result = subprocess.run([
-                'python', 'brand_identity_generator.py',
+                'python', 'agents/brand_identity_generator/brand_identity_generator.py',
                 input_file, '--enhance'
             ], capture_output=True, text=True)
 
-            if 'DeveloperConfig' not in open('brand_identity_generator.py').read():
+            if 'DeveloperConfig' not in open('agents/brand_identity_generator/brand_identity_generator.py').read():
                 # Before implementation - just verify tool works
                 assert result.returncode == 0
                 pytest.skip("Configuration system not implemented yet - test should fail initially")
@@ -111,7 +111,7 @@ Primary: professional blue
     def test_session_storage_location_configuration(self):
         """Test that session_storage_dir controls session save/load operations."""
         # This test will initially fail - should be implemented after configuration system
-        if 'DeveloperConfig' not in open('brand_identity_generator.py').read():
+        if 'DeveloperConfig' not in open('agents/brand_identity_generator/brand_identity_generator.py').read():
             pytest.skip("Configuration system not implemented yet - test should fail initially")
 
         # When implemented, should test session storage configuration
@@ -120,7 +120,7 @@ Primary: professional blue
     def test_cache_directory_configuration(self):
         """Test that cache_dir and enable_caching control LLM response caching."""
         # This test will initially fail - should be implemented after configuration system
-        if 'DeveloperConfig' not in open('brand_identity_generator.py').read():
+        if 'DeveloperConfig' not in open('agents/brand_identity_generator/brand_identity_generator.py').read():
             pytest.skip("Configuration system not implemented yet - test should fail initially")
 
         # When implemented, should test cache directory configuration
@@ -129,7 +129,7 @@ Primary: professional blue
     def test_cache_disabled_bypasses_cache_directory(self):
         """Test that enable_caching=False bypasses cache entirely."""
         # This test will initially fail - should be implemented after configuration system
-        if 'DeveloperConfig' not in open('brand_identity_generator.py').read():
+        if 'DeveloperConfig' not in open('agents/brand_identity_generator/brand_identity_generator.py').read():
             pytest.skip("Configuration system not implemented yet - test should fail initially")
 
         # When implemented, should test cache bypass behavior
@@ -138,7 +138,7 @@ Primary: professional blue
     def test_permission_error_messages_are_helpful(self):
         """Test that permission errors provide helpful messages."""
         # This test will initially fail - should be implemented after configuration system
-        if 'DeveloperConfig' not in open('brand_identity_generator.py').read():
+        if 'DeveloperConfig' not in open('agents/brand_identity_generator/brand_identity_generator.py').read():
             pytest.skip("Configuration system not implemented yet - test should fail initially")
 
         # When implemented, should test permission error messages
@@ -148,7 +148,7 @@ Primary: professional blue
     def test_directory_validation_caching(self):
         """Test that directory validation results are cached for performance."""
         # This test will initially fail - should be implemented after configuration system
-        if 'DeveloperConfig' not in open('brand_identity_generator.py').read():
+        if 'DeveloperConfig' not in open('agents/brand_identity_generator/brand_identity_generator.py').read():
             pytest.skip("Configuration system not implemented yet - test should fail initially")
 
         # When implemented, should test validation caching
@@ -157,7 +157,7 @@ Primary: professional blue
     def test_nested_directory_creation(self):
         """Test that nested directories are created properly."""
         # This test will initially fail - should be implemented after configuration system
-        if 'DeveloperConfig' not in open('brand_identity_generator.py').read():
+        if 'DeveloperConfig' not in open('agents/brand_identity_generator/brand_identity_generator.py').read():
             pytest.skip("Configuration system not implemented yet - test should fail initially")
 
         # When implemented, should test nested directory creation

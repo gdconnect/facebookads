@@ -27,7 +27,7 @@ Traits: professional
 
     try:
         result = subprocess.run([
-            'python', 'brand_identity_generator.py',
+            'python', 'agents/brand_identity_generator/brand_identity_generator.py',
             input_file, '--analyze-gaps'
         ], capture_output=True, text=True)
 
@@ -77,7 +77,7 @@ Traits: professional, innovative
 
     try:
         result = subprocess.run([
-            'python', 'brand_identity_generator.py',
+            'python', 'agents/brand_identity_generator/brand_identity_generator.py',
             input_file, '--analyze-gaps'
         ], capture_output=True, text=True)
 
@@ -109,7 +109,7 @@ Traits: modern, clean
 
     try:
         result = subprocess.run([
-            'python', 'brand_identity_generator.py',
+            'python', 'agents/brand_identity_generator/brand_identity_generator.py',
             input_file, '--analyze-gaps'
         ], capture_output=True, text=True)
 
@@ -136,7 +136,7 @@ Primary: blue
 
     try:
         result = subprocess.run([
-            'python', 'brand_identity_generator.py',
+            'python', 'agents/brand_identity_generator/brand_identity_generator.py',
             input_file, '--analyze-gaps'
         ], capture_output=True, text=True)
 
@@ -170,7 +170,7 @@ Primary: professional blue
 
     try:
         result = subprocess.run([
-            'python', 'brand_identity_generator.py',
+            'python', 'agents/brand_identity_generator/brand_identity_generator.py',
             input_file, '--analyze-gaps'
         ], capture_output=True, text=True)
 
@@ -203,7 +203,7 @@ Primary: blue
 
     try:
         result = subprocess.run([
-            'python', 'brand_identity_generator.py',
+            'python', 'agents/brand_identity_generator/brand_identity_generator.py',
             input_file, '--analyze-gaps'
         ], capture_output=True, text=True)
 
@@ -255,7 +255,7 @@ Corners: 4px border radius
 
     try:
         result = subprocess.run([
-            'python', 'brand_identity_generator.py',
+            'python', 'agents/brand_identity_generator/brand_identity_generator.py',
             input_file, '--analyze-gaps'
         ], capture_output=True, text=True)
 
@@ -288,7 +288,7 @@ Primary: blue
 
     try:
         result = subprocess.run([
-            'python', 'brand_identity_generator.py',
+            'python', 'agents/brand_identity_generator/brand_identity_generator.py',
             input_file, '--analyze-gaps', '-o', output_file
         ], capture_output=True, text=True)
 
@@ -311,7 +311,7 @@ Primary: blue
 def test_analyze_gaps_with_invalid_input():
     """Test gap analysis with invalid input."""
     result = subprocess.run([
-        'python', 'brand_identity_generator.py',
+        'python', 'agents/brand_identity_generator/brand_identity_generator.py',
         'nonexistent.md', '--analyze-gaps'
     ], capture_output=True, text=True)
 

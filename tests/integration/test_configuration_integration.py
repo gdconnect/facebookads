@@ -18,7 +18,7 @@ class TestConfigurationIntegration:
     def test_full_configuration_workflow(self):
         """Test complete configuration loading, validation, and usage workflow."""
         # This test will initially fail - should be implemented after configuration system
-        if 'DeveloperConfig' not in open('brand_identity_generator.py').read():
+        if 'DeveloperConfig' not in open('agents/brand_identity_generator/brand_identity_generator.py').read():
             pytest.skip("Configuration system not implemented yet - integration testing needs config")
 
         # When implemented, should test full workflow:
@@ -32,7 +32,7 @@ class TestConfigurationIntegration:
     def test_configuration_error_scenarios_end_to_end(self):
         """Test various configuration error scenarios end-to-end."""
         # This test will initially fail - should be implemented after configuration system
-        if 'DeveloperConfig' not in open('brand_identity_generator.py').read():
+        if 'DeveloperConfig' not in open('agents/brand_identity_generator/brand_identity_generator.py').read():
             pytest.skip("Configuration system not implemented yet - error scenario testing needs config")
 
         # When implemented, should test error scenarios:
@@ -45,7 +45,7 @@ class TestConfigurationIntegration:
     def test_configuration_with_different_environments(self):
         """Test configuration behavior in different environment setups."""
         # This test will initially fail - should be implemented after configuration system
-        if 'DeveloperConfig' not in open('brand_identity_generator.py').read():
+        if 'DeveloperConfig' not in open('agents/brand_identity_generator/brand_identity_generator.py').read():
             pytest.skip("Configuration system not implemented yet - environment testing needs config")
 
         # When implemented, should test different environments:
@@ -57,7 +57,7 @@ class TestConfigurationIntegration:
     def test_configuration_precedence_end_to_end(self):
         """Test configuration precedence rules in realistic scenarios."""
         # This test will initially fail - should be implemented after configuration system
-        if 'DeveloperConfig' not in open('brand_identity_generator.py').read():
+        if 'DeveloperConfig' not in open('agents/brand_identity_generator/brand_identity_generator.py').read():
             pytest.skip("Configuration system not implemented yet - precedence testing needs config")
 
         # When implemented, should test precedence:
@@ -70,7 +70,7 @@ class TestConfigurationIntegration:
     def test_directory_management_integration(self):
         """Test directory management integration with real file operations."""
         # This test will initially fail - should be implemented after configuration system
-        if 'DeveloperConfig' not in open('brand_identity_generator.py').read():
+        if 'DeveloperConfig' not in open('agents/brand_identity_generator/brand_identity_generator.py').read():
             pytest.skip("Configuration system not implemented yet - directory integration testing needs config")
 
         # When implemented, should test directory integration:
@@ -83,7 +83,7 @@ class TestConfigurationIntegration:
     def test_provider_configuration_integration(self):
         """Test LLM provider configuration integration with real requests."""
         # This test will initially fail - should be implemented after configuration system
-        if 'DeveloperConfig' not in open('brand_identity_generator.py').read():
+        if 'DeveloperConfig' not in open('agents/brand_identity_generator/brand_identity_generator.py').read():
             pytest.skip("Configuration system not implemented yet - provider integration testing needs config")
 
         # When implemented, should test provider integration:
@@ -96,7 +96,7 @@ class TestConfigurationIntegration:
     def test_performance_integration(self):
         """Test performance characteristics in realistic usage scenarios."""
         # This test will initially fail - should be implemented after configuration system
-        if 'DeveloperConfig' not in open('brand_identity_generator.py').read():
+        if 'DeveloperConfig' not in open('agents/brand_identity_generator/brand_identity_generator.py').read():
             pytest.skip("Configuration system not implemented yet - performance integration testing needs config")
 
         # When implemented, should test performance:
@@ -126,10 +126,10 @@ Traits: professional, innovative, trustworthy
         try:
             # Test that existing workflows continue to work
             existing_commands = [
-                ['python', 'brand_identity_generator.py', input_file, '--enhance'],
-                ['python', 'brand_identity_generator.py', input_file, '--analyze-gaps'],
-                ['python', 'brand_identity_generator.py', input_file, '--enhance', '--llm-provider', 'anthropic'],
-                ['python', 'brand_identity_generator.py', input_file, '--enhance', '--enhancement-level', 'comprehensive']
+                ['python', 'agents/brand_identity_generator/brand_identity_generator.py', input_file, '--enhance'],
+                ['python', 'agents/brand_identity_generator/brand_identity_generator.py', input_file, '--analyze-gaps'],
+                ['python', 'agents/brand_identity_generator/brand_identity_generator.py', input_file, '--enhance', '--llm-provider', 'anthropic'],
+                ['python', 'agents/brand_identity_generator/brand_identity_generator.py', input_file, '--enhance', '--enhancement-level', 'comprehensive']
             ]
 
             for command in existing_commands:
@@ -137,7 +137,7 @@ Traits: professional, innovative, trustworthy
                 assert result.returncode == 0, f"Command failed: {' '.join(command)} - {result.stderr}"
 
             # If configuration is implemented, verify it doesn't break existing usage
-            if 'DeveloperConfig' in open('brand_identity_generator.py').read():
+            if 'DeveloperConfig' in open('agents/brand_identity_generator/brand_identity_generator.py').read():
                 pytest.fail("Test should verify configuration doesn't break existing workflows")
 
         finally:
