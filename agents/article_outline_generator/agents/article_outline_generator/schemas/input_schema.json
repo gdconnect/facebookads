@@ -1,0 +1,93 @@
+{
+  "description": "Normalized input from markdown content.",
+  "properties": {
+    "content": {
+      "description": "Markdown content description",
+      "minLength": 1,
+      "title": "Content",
+      "type": "string"
+    },
+    "target_depth": {
+      "default": 3,
+      "description": "Desired outline depth (1-6)",
+      "maximum": 6,
+      "minimum": 1,
+      "title": "Target Depth",
+      "type": "integer"
+    },
+    "content_type_hint": {
+      "anyOf": [
+        {
+          "enum": [
+            "article",
+            "story"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Optional content type hint",
+      "title": "Content Type Hint"
+    },
+    "language_hint": {
+      "anyOf": [
+        {
+          "pattern": "^[a-z]{2}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Optional ISO 639-1 language code",
+      "title": "Language Hint"
+    },
+    "include_word_counts": {
+      "default": true,
+      "description": "Whether to generate word count estimates",
+      "title": "Include Word Counts",
+      "type": "boolean"
+    },
+    "interim": {
+      "default": false,
+      "description": "Request interim classification during processing",
+      "title": "Interim",
+      "type": "boolean"
+    },
+    "timeout_ms": {
+      "anyOf": [
+        {
+          "maximum": 30000,
+          "minimum": 100,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Timeout for interim responses (100-30000ms)",
+      "title": "Timeout Ms"
+    },
+    "classification_method": {
+      "default": "auto",
+      "description": "Classification method preference",
+      "enum": [
+        "auto",
+        "rules_only",
+        "llm_preferred"
+      ],
+      "title": "Classification Method",
+      "type": "string"
+    }
+  },
+  "required": [
+    "content"
+  ],
+  "title": "InputModel",
+  "type": "object"
+}

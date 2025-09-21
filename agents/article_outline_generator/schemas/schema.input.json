@@ -1,0 +1,37 @@
+{
+  "$id": "https://example.com/article-outline/schema.input.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Article Outline Generator: Input",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["content"],
+  "properties": {
+    "content": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Markdown content description of the article or story to outline"
+    },
+    "target_depth": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 6,
+      "default": 3,
+      "description": "Desired outline depth level (1-6)"
+    },
+    "content_type_hint": {
+      "type": "string",
+      "enum": ["article", "story"],
+      "description": "Optional hint for content type classification"
+    },
+    "language_hint": {
+      "type": "string",
+      "pattern": "^[a-z]{2}$",
+      "description": "Optional ISO 639-1 language code hint"
+    },
+    "include_word_counts": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether to generate word count estimates for sections"
+    }
+  }
+}

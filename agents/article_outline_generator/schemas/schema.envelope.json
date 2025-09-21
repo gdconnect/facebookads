@@ -1,0 +1,57 @@
+{
+  "$id": "https://example.com/article-outline/schema.envelope.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Article Outline Generator: Agent Envelope",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["meta", "input"],
+  "properties": {
+    "meta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["agent", "version", "trace_id", "ts", "brand_token", "hash", "cost"],
+      "properties": {
+        "agent": { "type": "string", "const": "article_outline_generator" },
+        "version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+        "trace_id": { "type": "string", "minLength": 1 },
+        "ts": { "type": "string", "format": "date-time" },
+        "brand_token": { "type": "string" },
+        "hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "cost": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["tokens_in", "tokens_out", "usd"],
+          "properties": {
+            "tokens_in": { "type": "number", "minimum": 0 },
+            "tokens_out": { "type": "number", "minimum": 0 },
+            "usd": { "type": "number", "minimum": 0 }
+          }
+        },
+        "prompt_id": { "type": ["string", "null"] },
+        "prompt_hash": { "type": ["string", "null"], "pattern": "^[a-f0-9]{64}$|null" }
+      }
+    },
+    "input": { "$ref": "schema.input.json" },
+    "output": {
+      "oneOf": [
+        { "$ref": "schema.output.json" },
+        { "type": "null" }
+      ]
+    },
+    "error": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["code", "message"],
+          "properties": {
+            "code": { "type": "string" },
+            "message": { "type": "string" },
+            "details": { "type": "object" }
+          }
+        },
+        { "type": "null" }
+      ]
+    }
+  }
+}

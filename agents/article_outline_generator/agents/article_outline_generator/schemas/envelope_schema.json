@@ -1,0 +1,532 @@
+{
+  "$defs": {
+    "CostModel": {
+      "description": "Enhanced cost tracking with LLM call limits.",
+      "properties": {
+        "tokens_in": {
+          "minimum": 0,
+          "title": "Tokens In",
+          "type": "integer"
+        },
+        "tokens_out": {
+          "minimum": 0,
+          "title": "Tokens Out",
+          "type": "integer"
+        },
+        "usd": {
+          "minimum": 0.0,
+          "title": "Usd",
+          "type": "number"
+        },
+        "llm_calls": {
+          "description": "Max 2 LLM calls per constitutional requirement",
+          "maximum": 2,
+          "minimum": 0,
+          "title": "Llm Calls",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "tokens_in",
+        "tokens_out",
+        "usd",
+        "llm_calls"
+      ],
+      "title": "CostModel",
+      "type": "object"
+    },
+    "EnvelopeMeta": {
+      "description": "Agent execution metadata (Constitutional Article II).",
+      "properties": {
+        "agent": {
+          "const": "article_outline_generator",
+          "title": "Agent",
+          "type": "string"
+        },
+        "version": {
+          "pattern": "^\\d+\\.\\d+\\.\\d+$",
+          "title": "Version",
+          "type": "string"
+        },
+        "trace_id": {
+          "title": "Trace Id",
+          "type": "string"
+        },
+        "ts": {
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "brand_token": {
+          "title": "Brand Token",
+          "type": "string"
+        },
+        "hash": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Hash",
+          "type": "string"
+        },
+        "cost": {
+          "$ref": "#/$defs/CostModel",
+          "description": "Enhanced cost tracking with LLM call limits"
+        },
+        "prompt_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Prompt Id"
+        },
+        "prompt_hash": {
+          "anyOf": [
+            {
+              "pattern": "^[a-f0-9]{64}$|^$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Prompt Hash"
+        },
+        "classification_enhanced": {
+          "default": false,
+          "description": "Whether LLM enhancement was used",
+          "title": "Classification Enhanced",
+          "type": "boolean"
+        },
+        "fallback_used": {
+          "default": false,
+          "description": "Whether fallback to rules was needed",
+          "title": "Fallback Used",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "agent",
+        "version",
+        "trace_id",
+        "ts",
+        "brand_token",
+        "hash",
+        "cost"
+      ],
+      "title": "EnvelopeMeta",
+      "type": "object"
+    },
+    "ErrorModel": {
+      "description": "Error response structure.",
+      "properties": {
+        "code": {
+          "title": "Code",
+          "type": "string"
+        },
+        "message": {
+          "title": "Message",
+          "type": "string"
+        },
+        "details": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Details"
+        }
+      },
+      "required": [
+        "code",
+        "message"
+      ],
+      "title": "ErrorModel",
+      "type": "object"
+    },
+    "InputModel": {
+      "description": "Normalized input from markdown content.",
+      "properties": {
+        "content": {
+          "description": "Markdown content description",
+          "minLength": 1,
+          "title": "Content",
+          "type": "string"
+        },
+        "target_depth": {
+          "default": 3,
+          "description": "Desired outline depth (1-6)",
+          "maximum": 6,
+          "minimum": 1,
+          "title": "Target Depth",
+          "type": "integer"
+        },
+        "content_type_hint": {
+          "anyOf": [
+            {
+              "enum": [
+                "article",
+                "story"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional content type hint",
+          "title": "Content Type Hint"
+        },
+        "language_hint": {
+          "anyOf": [
+            {
+              "pattern": "^[a-z]{2}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional ISO 639-1 language code",
+          "title": "Language Hint"
+        },
+        "include_word_counts": {
+          "default": true,
+          "description": "Whether to generate word count estimates",
+          "title": "Include Word Counts",
+          "type": "boolean"
+        },
+        "interim": {
+          "default": false,
+          "description": "Request interim classification during processing",
+          "title": "Interim",
+          "type": "boolean"
+        },
+        "timeout_ms": {
+          "anyOf": [
+            {
+              "maximum": 30000,
+              "minimum": 100,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Timeout for interim responses (100-30000ms)",
+          "title": "Timeout Ms"
+        },
+        "classification_method": {
+          "default": "auto",
+          "description": "Classification method preference",
+          "enum": [
+            "auto",
+            "rules_only",
+            "llm_preferred"
+          ],
+          "title": "Classification Method",
+          "type": "string"
+        }
+      },
+      "required": [
+        "content"
+      ],
+      "title": "InputModel",
+      "type": "object"
+    },
+    "InterimOutputModel": {
+      "description": "Interim response with classification only.",
+      "properties": {
+        "meta": {
+          "$ref": "#/$defs/OutlineMetadata"
+        },
+        "outline": {
+          "description": "Empty for interim responses",
+          "items": {
+            "$ref": "#/$defs/Section"
+          },
+          "title": "Outline",
+          "type": "array"
+        }
+      },
+      "required": [
+        "meta"
+      ],
+      "title": "InterimOutputModel",
+      "type": "object"
+    },
+    "OutlineMetadata": {
+      "description": "Metadata about the generated outline.",
+      "properties": {
+        "content_type": {
+          "enum": [
+            "article",
+            "story"
+          ],
+          "title": "Content Type",
+          "type": "string"
+        },
+        "detected_language": {
+          "pattern": "^[a-z]{2}$",
+          "title": "Detected Language",
+          "type": "string"
+        },
+        "depth": {
+          "maximum": 6,
+          "minimum": 1,
+          "title": "Depth",
+          "type": "integer"
+        },
+        "sections_count": {
+          "minimum": 0,
+          "title": "Sections Count",
+          "type": "integer"
+        },
+        "generated_at": {
+          "format": "date-time",
+          "title": "Generated At",
+          "type": "string"
+        },
+        "notes": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Notes"
+        },
+        "classification_confidence": {
+          "default": 0.8,
+          "description": "Classification confidence score",
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Classification Confidence",
+          "type": "number"
+        },
+        "classification_method": {
+          "default": "rule_based",
+          "description": "Method used for classification",
+          "enum": [
+            "rule_based",
+            "llm_single",
+            "llm_double"
+          ],
+          "title": "Classification Method",
+          "type": "string"
+        },
+        "classification_reasoning": {
+          "default": "Rule-based classification",
+          "description": "Why this classification was chosen",
+          "minLength": 1,
+          "title": "Classification Reasoning",
+          "type": "string"
+        },
+        "key_indicators": {
+          "description": "Key content indicators found",
+          "items": {
+            "type": "string"
+          },
+          "title": "Key Indicators",
+          "type": "array"
+        },
+        "llm_calls_used": {
+          "default": 0,
+          "description": "Number of LLM calls made",
+          "maximum": 2,
+          "minimum": 0,
+          "title": "Llm Calls Used",
+          "type": "integer"
+        },
+        "processing_time_ms": {
+          "default": 0,
+          "description": "Total processing time in milliseconds",
+          "minimum": 0,
+          "title": "Processing Time Ms",
+          "type": "integer"
+        },
+        "interim_available": {
+          "default": false,
+          "description": "Whether interim classification was requested",
+          "title": "Interim Available",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "content_type",
+        "detected_language",
+        "depth",
+        "sections_count",
+        "generated_at"
+      ],
+      "title": "OutlineMetadata",
+      "type": "object"
+    },
+    "OutputModel": {
+      "description": "Complete outline response structure.",
+      "properties": {
+        "meta": {
+          "$ref": "#/$defs/OutlineMetadata"
+        },
+        "outline": {
+          "description": "Top-level sections",
+          "items": {
+            "$ref": "#/$defs/Section"
+          },
+          "minItems": 1,
+          "title": "Outline",
+          "type": "array"
+        }
+      },
+      "required": [
+        "meta",
+        "outline"
+      ],
+      "title": "OutputModel",
+      "type": "object"
+    },
+    "Section": {
+      "description": "Individual outline section with hierarchical support.",
+      "properties": {
+        "title": {
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Stable slug/identifier",
+          "title": "Id"
+        },
+        "level": {
+          "default": 1,
+          "description": "Heading level (1=H1, 2=H2, ...)",
+          "maximum": 6,
+          "minimum": 1,
+          "title": "Level",
+          "type": "integer"
+        },
+        "summary": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "1-3 sentence section synopsis",
+          "title": "Summary"
+        },
+        "key_points": {
+          "description": "Bullet points for section",
+          "items": {
+            "type": "string"
+          },
+          "title": "Key Points",
+          "type": "array"
+        },
+        "word_count_estimate": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Estimated word count",
+          "title": "Word Count Estimate"
+        },
+        "subsections": {
+          "description": "Nested subsections",
+          "items": {
+            "$ref": "#/$defs/Section"
+          },
+          "title": "Subsections",
+          "type": "array"
+        }
+      },
+      "required": [
+        "title"
+      ],
+      "title": "Section",
+      "type": "object"
+    }
+  },
+  "description": "Agent response envelope (Constitutional Article II).",
+  "properties": {
+    "meta": {
+      "$ref": "#/$defs/EnvelopeMeta"
+    },
+    "input": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/InputModel"
+        },
+        {
+          "additionalProperties": true,
+          "type": "object"
+        }
+      ],
+      "title": "Input"
+    },
+    "output": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/OutputModel"
+        },
+        {
+          "$ref": "#/$defs/InterimOutputModel"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Output"
+    },
+    "error": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ErrorModel"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    }
+  },
+  "required": [
+    "meta",
+    "input"
+  ],
+  "title": "AgentEnvelope",
+  "type": "object"
+}
