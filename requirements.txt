@@ -6,6 +6,7 @@ click>=8.0.0
 # LLM Integration
 openai>=1.0.0
 anthropic>=0.3.0
+pydantic-ai>=0.0.1
 
 # Development and Testing
 pytest>=7.0.0
