@@ -7,30 +7,35 @@ Supports gap analysis, semantic color generation, and unified design strategies.
 """
 
 import argparse
+import hashlib
 import json
+import os
+import re
 import sys
 import time
-import hashlib
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
 from datetime import datetime
-from pydantic import BaseModel, Field, field_validator
-import re
-import os
+from pathlib import Path
+from typing import Any
 
+from pydantic import BaseModel
+from pydantic import Field
+from pydantic import field_validator
 
 # ============================================================================
 # DEVELOPER CONFIGURATION - Edit settings below for your environment
 # ============================================================================
+
 
 class DeveloperConfig(BaseModel):
     """Configuration settings for developers to customize the tool."""
 
     # LLM Provider Settings
     llm_provider: str = "openai"  # openai, anthropic, local
-    llm_base_url: Optional[str] = None  # Custom API endpoint URL
-    llm_model: str = "gpt-3.5-turbo"  # Model name (e.g., gpt-3.5-turbo, claude-3-sonnet)
-    llm_api_key: Optional[str] = None  # API key (uses environment variable if not set)
+    llm_base_url: str | None = None  # Custom API endpoint URL
+    llm_model: str = (
+        "gpt-3.5-turbo"  # Model name (e.g., gpt-3.5-turbo, claude-3-sonnet)
+    )
+    llm_api_key: str | None = None  # API key (uses environment variable if not set)
 
     # Output Management
     default_output_dir: str = "./output"  # Default directory for generated JSON files
@@ -49,7 +54,9 @@ class DeveloperConfig(BaseModel):
     log_level: str = "INFO"  # Logging level: DEBUG, INFO, WARNING, ERROR
 
     # Font Selection Settings
-    google_fonts_api_key: Optional[str] = None  # Google Fonts API key (uses environment variable if not set)
+    google_fonts_api_key: str | None = (
+        None  # Google Fonts API key (uses environment variable if not set)
+    )
     font_cache_dir: str = "./cache/fonts"  # Directory for Google Fonts cache
     font_cache_ttl_hours: int = 24  # Cache time-to-live in hours (1-168)
     font_cache_max_size_mb: int = 50  # Maximum cache size in MB (1-500)
@@ -58,66 +65,76 @@ class DeveloperConfig(BaseModel):
     class Config:
         extra = "forbid"  # Prevent unknown fields
 
-    @field_validator('llm_provider')
+    @field_validator("llm_provider")
     @classmethod
     def validate_llm_provider(cls, v):
         valid_providers = ["openai", "anthropic", "local"]
         if v not in valid_providers:
-            raise ValueError(f"Invalid LLM provider '{v}'. Valid options: {', '.join(valid_providers)}")
+            raise ValueError(
+                f"Invalid LLM provider '{v}'. Valid options: {', '.join(valid_providers)}"
+            )
         return v
 
-    @field_validator('llm_base_url')
+    @field_validator("llm_base_url")
     @classmethod
     def validate_base_url(cls, v):
-        if v is not None and not (v.startswith('http://') or v.startswith('https://')):
-            raise ValueError(f"Invalid base URL format '{v}'. Must start with http:// or https://")
+        if v is not None and not (v.startswith("http://") or v.startswith("https://")):
+            raise ValueError(
+                f"Invalid base URL format '{v}'. Must start with http:// or https://"
+            )
         return v
 
-    @field_validator('request_timeout')
+    @field_validator("request_timeout")
     @classmethod
     def validate_timeout(cls, v):
         if v < 1.0:
             raise ValueError(f"Request timeout must be >= 1.0 seconds, got {v}")
         return v
 
-    @field_validator('max_retries')
+    @field_validator("max_retries")
     @classmethod
     def validate_max_retries(cls, v):
         if not (0 <= v <= 10):
             raise ValueError(f"Max retries must be between 0 and 10, got {v}")
         return v
 
-    @field_validator('retry_backoff_factor')
+    @field_validator("retry_backoff_factor")
     @classmethod
     def validate_backoff_factor(cls, v):
         if not (1.0 <= v <= 5.0):
-            raise ValueError(f"Retry backoff factor must be between 1.0 and 5.0, got {v}")
+            raise ValueError(
+                f"Retry backoff factor must be between 1.0 and 5.0, got {v}"
+            )
         return v
 
-    @field_validator('default_enhancement_level')
+    @field_validator("default_enhancement_level")
     @classmethod
     def validate_enhancement_level(cls, v):
         valid_levels = ["minimal", "moderate", "comprehensive"]
         if v not in valid_levels:
-            raise ValueError(f"Invalid enhancement level '{v}'. Valid options: {', '.join(valid_levels)}")
+            raise ValueError(
+                f"Invalid enhancement level '{v}'. Valid options: {', '.join(valid_levels)}"
+            )
         return v
 
-    @field_validator('log_level')
+    @field_validator("log_level")
     @classmethod
     def validate_log_level(cls, v):
         valid_levels = ["DEBUG", "INFO", "WARNING", "ERROR"]
         if v not in valid_levels:
-            raise ValueError(f"Invalid log level '{v}'. Valid options: {', '.join(valid_levels)}")
+            raise ValueError(
+                f"Invalid log level '{v}'. Valid options: {', '.join(valid_levels)}"
+            )
         return v
 
-    @field_validator('font_cache_ttl_hours')
+    @field_validator("font_cache_ttl_hours")
     @classmethod
     def validate_font_cache_ttl(cls, v):
         if not 1 <= v <= 168:  # 1 hour to 1 week
             raise ValueError(f"Font cache TTL '{v}' must be between 1 and 168 hours")
         return v
 
-    @field_validator('font_cache_max_size_mb')
+    @field_validator("font_cache_max_size_mb")
     @classmethod
     def validate_font_cache_max_size(cls, v):
         if not 1 <= v <= 500:  # 1MB to 500MB
@@ -126,38 +143,38 @@ class DeveloperConfig(BaseModel):
 
     def __init__(self, **data):
         # Apply environment variable fallbacks before validation
-        if not data.get('llm_api_key'):
-            provider = data.get('llm_provider', 'openai').upper()
-            data['llm_api_key'] = os.getenv(f"{provider}_API_KEY")
+        if not data.get("llm_api_key"):
+            provider = data.get("llm_provider", "openai").upper()
+            data["llm_api_key"] = os.getenv(f"{provider}_API_KEY")
 
-        if not data.get('llm_base_url'):
-            provider = data.get('llm_provider', 'openai').upper()
-            data['llm_base_url'] = os.getenv(f"{provider}_BASE_URL")
+        if not data.get("llm_base_url"):
+            provider = data.get("llm_provider", "openai").upper()
+            data["llm_base_url"] = os.getenv(f"{provider}_BASE_URL")
 
         # Apply Google Fonts API key from environment if not provided
-        if not data.get('google_fonts_api_key'):
-            data['google_fonts_api_key'] = os.getenv('GOOGLE_FONTS_API_KEY')
+        if not data.get("google_fonts_api_key"):
+            data["google_fonts_api_key"] = os.getenv("GOOGLE_FONTS_API_KEY")
 
         # Apply configuration overrides from environment variables
         env_overrides = {
-            'llm_provider': os.getenv('BRAND_TOOL_LLM_PROVIDER'),
-            'default_output_dir': os.getenv('BRAND_TOOL_OUTPUT_DIR'),
-            'cache_dir': os.getenv('BRAND_TOOL_CACHE_DIR'),
-            'session_storage_dir': os.getenv('BRAND_TOOL_SESSION_DIR'),
-            'debug_mode': os.getenv('BRAND_TOOL_DEBUG_MODE'),
-            'log_level': os.getenv('BRAND_TOOL_LOG_LEVEL'),
-            'enable_caching': os.getenv('BRAND_TOOL_CACHE_ENABLED'),
-            'font_cache_dir': os.getenv('BRAND_TOOL_FONT_CACHE_DIR'),
-            'font_cache_ttl_hours': os.getenv('BRAND_TOOL_FONT_CACHE_TTL'),
-            'font_cache_max_size_mb': os.getenv('BRAND_TOOL_FONT_CACHE_SIZE'),
-            'enable_font_selection': os.getenv('BRAND_TOOL_FONT_ENABLED'),
+            "llm_provider": os.getenv("BRAND_TOOL_LLM_PROVIDER"),
+            "default_output_dir": os.getenv("BRAND_TOOL_OUTPUT_DIR"),
+            "cache_dir": os.getenv("BRAND_TOOL_CACHE_DIR"),
+            "session_storage_dir": os.getenv("BRAND_TOOL_SESSION_DIR"),
+            "debug_mode": os.getenv("BRAND_TOOL_DEBUG_MODE"),
+            "log_level": os.getenv("BRAND_TOOL_LOG_LEVEL"),
+            "enable_caching": os.getenv("BRAND_TOOL_CACHE_ENABLED"),
+            "font_cache_dir": os.getenv("BRAND_TOOL_FONT_CACHE_DIR"),
+            "font_cache_ttl_hours": os.getenv("BRAND_TOOL_FONT_CACHE_TTL"),
+            "font_cache_max_size_mb": os.getenv("BRAND_TOOL_FONT_CACHE_SIZE"),
+            "enable_font_selection": os.getenv("BRAND_TOOL_FONT_ENABLED"),
         }
 
         for key, env_value in env_overrides.items():
             if env_value is not None and key not in data:
-                if key in ['debug_mode', 'enable_caching', 'enable_font_selection']:
-                    data[key] = env_value.lower() in ('true', '1', 'yes', 'on')
-                elif key in ['font_cache_ttl_hours', 'font_cache_max_size_mb']:
+                if key in ["debug_mode", "enable_caching", "enable_font_selection"]:
+                    data[key] = env_value.lower() in ("true", "1", "yes", "on")
+                elif key in ["font_cache_ttl_hours", "font_cache_max_size_mb"]:
                     try:
                         data[key] = int(env_value)
                     except ValueError:
@@ -173,9 +190,9 @@ class ResolvedConfig(BaseModel):
 
     # All fields from DeveloperConfig
     llm_provider: str
-    llm_base_url: Optional[str]
+    llm_base_url: str | None
     llm_model: str
-    llm_api_key: Optional[str]
+    llm_api_key: str | None
     default_output_dir: str
     session_storage_dir: str
     cache_dir: str
@@ -188,9 +205,9 @@ class ResolvedConfig(BaseModel):
     log_level: str
 
     # Source tracking and validation
-    config_source: Dict[str, str] = Field(default_factory=dict)
-    validation_warnings: List[str] = Field(default_factory=list)
-    validation_errors: List[str] = Field(default_factory=list)
+    config_source: dict[str, str] = Field(default_factory=dict)
+    validation_warnings: list[str] = Field(default_factory=list)
+    validation_errors: list[str] = Field(default_factory=list)
 
     class Config:
         extra = "forbid"
@@ -199,8 +216,13 @@ class ResolvedConfig(BaseModel):
 class ConfigurationError(Exception):
     """Custom exception for configuration-related errors."""
 
-    def __init__(self, message: str, setting_name: Optional[str] = None,
-                 setting_value: Optional[Any] = None, suggestion: Optional[str] = None):
+    def __init__(
+        self,
+        message: str,
+        setting_name: str | None = None,
+        setting_value: Any | None = None,
+        suggestion: str | None = None,
+    ):
         self.message = message
         self.setting_name = setting_name
         self.setting_value = setting_value
@@ -220,9 +242,9 @@ class ConfigurationError(Exception):
 class DirectoryManager:
     """Manages creation and validation of configured directories."""
 
-    def __init__(self, directories: Optional[List[str]] = None):
+    def __init__(self, directories: list[str] | None = None):
         self.directories = [Path(d) for d in (directories or [])]
-        self.validation_cache: Dict[str, bool] = {}
+        self.validation_cache: dict[str, bool] = {}
         self.created_directories: set = set()
 
     def ensure_directory_exists(self, directory: str) -> None:
@@ -251,14 +273,14 @@ class DirectoryManager:
                 f"No write permission for directory: {path}",
                 setting_name="directory_permission",
                 setting_value=str(path),
-                suggestion="Check directory permissions or choose a different location"
+                suggestion="Check directory permissions or choose a different location",
             )
         except Exception as e:
             raise ConfigurationError(
                 f"Failed to create directory: {path}",
                 setting_name="directory_creation",
                 setting_value=str(path),
-                suggestion=f"Error: {e}"
+                suggestion=f"Error: {e}",
             )
 
     def ensure_exists(self) -> None:
@@ -285,12 +307,12 @@ class DirectoryManager:
             except PermissionError:
                 raise ConfigurationError(
                     f"No write permission for directory: {directory}",
-                    suggestion="Check directory permissions or choose a different location"
+                    suggestion="Check directory permissions or choose a different location",
                 )
             except Exception as e:
                 raise ConfigurationError(
                     f"Cannot create or access directory {directory}: {e}",
-                    suggestion="Ensure parent directory exists and you have write permissions"
+                    suggestion="Ensure parent directory exists and you have write permissions",
                 )
 
     def validate_permissions(self) -> None:
@@ -314,11 +336,11 @@ class EnvironmentResolver:
         self.provider_env_map = {
             "openai": "OPENAI",
             "anthropic": "ANTHROPIC",
-            "local": "LOCAL"
+            "local": "LOCAL",
         }
-        self.env_cache: Dict[str, Optional[str]] = {}
+        self.env_cache: dict[str, str | None] = {}
 
-    def resolve_api_key(self, provider: str) -> Optional[str]:
+    def resolve_api_key(self, provider: str) -> str | None:
         """Get API key for provider from environment."""
         cache_key = f"{provider}_api_key"
         if cache_key not in self.env_cache:
@@ -326,7 +348,7 @@ class EnvironmentResolver:
             self.env_cache[cache_key] = os.getenv(f"{env_prefix}_API_KEY")
         return self.env_cache[cache_key]
 
-    def resolve_base_url(self, provider: str) -> Optional[str]:
+    def resolve_base_url(self, provider: str) -> str | None:
         """Get base URL for provider from environment."""
         cache_key = f"{provider}_base_url"
         if cache_key not in self.env_cache:
@@ -334,36 +356,44 @@ class EnvironmentResolver:
             self.env_cache[cache_key] = os.getenv(f"{env_prefix}_BASE_URL")
         return self.env_cache[cache_key]
 
-    def get_all_env_overrides(self) -> Dict[str, Optional[str]]:
+    def get_all_env_overrides(self) -> dict[str, str | None]:
         """Get all environment variable overrides."""
         return {
-            'llm_provider': os.getenv('BRAND_TOOL_LLM_PROVIDER'),
-            'llm_base_url': os.getenv('BRAND_TOOL_LLM_BASE_URL'),
-            'llm_model': os.getenv('BRAND_TOOL_LLM_MODEL'),
-            'default_output_dir': os.getenv('BRAND_TOOL_OUTPUT_DIR'),
-            'session_storage_dir': os.getenv('BRAND_TOOL_SESSION_DIR'),
-            'cache_dir': os.getenv('BRAND_TOOL_CACHE_DIR'),
-            'request_timeout': os.getenv('BRAND_TOOL_REQUEST_TIMEOUT'),
-            'enable_caching': os.getenv('BRAND_TOOL_ENABLE_CACHING'),
-            'debug_mode': os.getenv('BRAND_TOOL_DEBUG_MODE'),
+            "llm_provider": os.getenv("BRAND_TOOL_LLM_PROVIDER"),
+            "llm_base_url": os.getenv("BRAND_TOOL_LLM_BASE_URL"),
+            "llm_model": os.getenv("BRAND_TOOL_LLM_MODEL"),
+            "default_output_dir": os.getenv("BRAND_TOOL_OUTPUT_DIR"),
+            "session_storage_dir": os.getenv("BRAND_TOOL_SESSION_DIR"),
+            "cache_dir": os.getenv("BRAND_TOOL_CACHE_DIR"),
+            "request_timeout": os.getenv("BRAND_TOOL_REQUEST_TIMEOUT"),
+            "enable_caching": os.getenv("BRAND_TOOL_ENABLE_CACHING"),
+            "debug_mode": os.getenv("BRAND_TOOL_DEBUG_MODE"),
         }
 
 
 # Global configuration instances
 DEV_CONFIG = DeveloperConfig()
-RESOLVED_CONFIG: Optional[ResolvedConfig] = None
+RESOLVED_CONFIG: ResolvedConfig | None = None
 
 # ============================================================================
 # LLM Integration Models
 # ============================================================================
 
+
 class LLMRequest(BaseModel):
     """Structured request to LLM for brand enhancement."""
 
-    prompt_type: str = Field(..., description="Type of enhancement: gap_analysis, color_generation, design_strategy")
-    context: Dict[str, Any] = Field(..., description="Brand context and existing elements")
-    enhancement_level: str = Field("moderate", pattern="^(minimal|moderate|comprehensive)$")
-    user_preferences: Optional[Dict[str, Any]] = None
+    prompt_type: str = Field(
+        ...,
+        description="Type of enhancement: gap_analysis, color_generation, design_strategy",
+    )
+    context: dict[str, Any] = Field(
+        ..., description="Brand context and existing elements"
+    )
+    enhancement_level: str = Field(
+        "moderate", pattern="^(minimal|moderate|comprehensive)$"
+    )
+    user_preferences: dict[str, Any] | None = None
 
     class Config:
         schema_extra = {
@@ -372,9 +402,9 @@ class LLMRequest(BaseModel):
                 "context": {
                     "brand_name": "TechFlow",
                     "personality": "professional, innovative",
-                    "color_descriptions": ["professional blue", "energetic orange"]
+                    "color_descriptions": ["professional blue", "energetic orange"],
                 },
-                "enhancement_level": "moderate"
+                "enhancement_level": "moderate",
             }
         }
 
@@ -383,13 +413,13 @@ class LLMResponse(BaseModel):
     """Response from LLM with enhancement suggestions."""
 
     response_type: str
-    content: Dict[str, Any]
+    content: dict[str, Any]
     confidence_score: float = Field(..., ge=0.0, le=1.0)
     rationale: str = Field(..., description="Explanation of enhancement decisions")
-    alternatives: List[Dict[str, Any]] = Field(default_factory=list)
+    alternatives: list[dict[str, Any]] = Field(default_factory=list)
     processing_time: float
 
-    @field_validator('confidence_score')
+    @field_validator("confidence_score")
     @classmethod
     def validate_confidence(cls, v):
         return max(0.0, min(1.0, v))
@@ -399,12 +429,20 @@ class LLMResponse(BaseModel):
             "example": {
                 "response_type": "color_enhancement",
                 "content": {
-                    "primary": {"hex": "#2563EB", "name": "Professional Blue", "usage": "CTAs, headers"},
-                    "secondary": {"hex": "#F97316", "name": "Energetic Orange", "usage": "Accents, highlights"}
+                    "primary": {
+                        "hex": "#2563EB",
+                        "name": "Professional Blue",
+                        "usage": "CTAs, headers",
+                    },
+                    "secondary": {
+                        "hex": "#F97316",
+                        "name": "Energetic Orange",
+                        "usage": "Accents, highlights",
+                    },
                 },
                 "confidence_score": 0.87,
                 "rationale": "Blue conveys trust and professionalism while orange adds energy and innovation",
-                "processing_time": 1.2
+                "processing_time": 1.2,
             }
         }
 
@@ -417,21 +455,25 @@ class LLMEnhancementEngine:
         Brand: {brand_content}
         Required elements: colors, typography, personality, visual style
         Return: JSON with missing elements and recommendations""",
-
         "color_generation": """Generate hex codes for these color descriptions:
         Colors: {color_descriptions}
         Brand personality: {personality}
         Return: JSON with hex codes, names, usage guidelines, accessibility scores""",
-
         "design_strategy": """Create unified design strategy:
         Brand: {brand_summary}
         Elements: {existing_elements}
-        Return: JSON with spacing, hierarchy, consistency guidelines"""
+        Return: JSON with spacing, hierarchy, consistency guidelines""",
     }
 
-    def __init__(self, provider: str = "openai", api_key: Optional[str] = None,
-                 model: str = "gpt-3.5-turbo", enable_caching: bool = True,
-                 timeout: float = 30.0, base_url: Optional[str] = None):
+    def __init__(
+        self,
+        provider: str = "openai",
+        api_key: str | None = None,
+        model: str = "gpt-3.5-turbo",
+        enable_caching: bool = True,
+        timeout: float = 30.0,
+        base_url: str | None = None,
+    ):
         """Initialize LLM enhancement engine."""
         if provider not in ["openai", "anthropic", "local"]:
             raise ValueError(f"Invalid provider: {provider}")
@@ -442,7 +484,7 @@ class LLMEnhancementEngine:
         self.enable_caching = enable_caching
         self.base_url = base_url
         self.timeout = timeout
-        self._cache: Dict[str, LLMResponse] = {}
+        self._cache: dict[str, LLMResponse] = {}
 
     def process_request(self, request: LLMRequest) -> LLMResponse:
         """Process an LLM request and return response."""
@@ -474,8 +516,8 @@ class LLMEnhancementEngine:
                 response_type=f"{request.prompt_type}_error",
                 content={"error": str(e)},
                 confidence_score=0.0,
-                rationale=f"Error processing request: {str(e)}",
-                processing_time=time.time() - start_time
+                rationale=f"Error processing request: {e!s}",
+                processing_time=time.time() - start_time,
             )
 
     def _generate_mock_response(self, request: LLMRequest) -> LLMResponse:
@@ -487,7 +529,9 @@ class LLMEnhancementEngine:
 
             # Calculate based on available fields
             available_fields = 0
-            total_fields = 6  # brand_name, colors, personality, typography, visual_style, logo
+            total_fields = (
+                6  # brand_name, colors, personality, typography, visual_style, logo
+            )
 
             if content.get("brand_name"):
                 available_fields += 1
@@ -509,35 +553,44 @@ class LLMEnhancementEngine:
             raw_content_lower = content.get("raw_content", "").lower()
 
             # Check for typography section/keywords
-            if not any(keyword in raw_content_lower for keyword in ["typography", "font", "typeface"]):
+            if not any(
+                keyword in raw_content_lower
+                for keyword in ["typography", "font", "typeface"]
+            ):
                 missing_elements.append("typography")
 
             # Check for visual style section/keywords
-            if not any(keyword in raw_content_lower for keyword in ["visual style", "style:", "design style", "aesthetic"]):
+            if not any(
+                keyword in raw_content_lower
+                for keyword in ["visual style", "style:", "design style", "aesthetic"]
+            ):
                 missing_elements.append("visual_style")
 
             return LLMResponse(
                 response_type="gap_analysis",
                 content={
                     "missing_elements": missing_elements,
-                    "incomplete_elements": ["color_palette"] if len(content.get("colors", [])) < 3 else [],
+                    "incomplete_elements": ["color_palette"]
+                    if len(content.get("colors", [])) < 3
+                    else [],
                     "completeness_score": completeness_score,
                     "priority_gaps": [
                         {
                             "element": elem,
                             "impact": "high",
-                            "description": f"No {elem.replace('_', ' ')} specified"
-                        } for elem in missing_elements[:3]  # Top 3 gaps
+                            "description": f"No {elem.replace('_', ' ')} specified",
+                        }
+                        for elem in missing_elements[:3]  # Top 3 gaps
                     ],
                     "enhancement_opportunities": [
                         "Generate specific hex codes for color descriptions",
                         "Create unified design strategy",
-                        "Establish visual hierarchy guidelines"
-                    ]
+                        "Establish visual hierarchy guidelines",
+                    ],
                 },
                 confidence_score=0.85,
                 rationale="Analysis based on standard brand requirements",
-                processing_time=0.0
+                processing_time=0.0,
             )
 
         elif request.prompt_type == "color_generation":
@@ -547,21 +600,21 @@ class LLMEnhancementEngine:
                     "primary": {
                         "hex": "#2563EB",
                         "name": "Professional Blue",
-                        "usage": "Primary brand color for headers and CTAs"
+                        "usage": "Primary brand color for headers and CTAs",
                     },
                     "secondary": {
                         "hex": "#F97316",
                         "name": "Energetic Orange",
-                        "usage": "Accents and highlights"
-                    }
+                        "usage": "Accents and highlights",
+                    },
                 },
                 confidence_score=0.92,
                 rationale="Colors selected based on brand personality and accessibility",
                 alternatives=[
                     {"hex": "#1E40AF", "name": "Deep Blue"},
-                    {"hex": "#3B82F6", "name": "Bright Blue"}
+                    {"hex": "#3B82F6", "name": "Bright Blue"},
                 ],
-                processing_time=0.0
+                processing_time=0.0,
             )
 
         elif request.prompt_type == "design_strategy":
@@ -571,13 +624,13 @@ class LLMEnhancementEngine:
                     "consistency_principles": [
                         "Maintain 4.5:1 contrast ratio",
                         "Use consistent spacing scale",
-                        "Apply hierarchical typography"
+                        "Apply hierarchical typography",
                     ],
-                    "coherence_score": 0.88
+                    "coherence_score": 0.88,
                 },
                 confidence_score=0.89,
                 rationale="Strategy ensures brand consistency and accessibility",
-                processing_time=0.0
+                processing_time=0.0,
             )
 
         else:
@@ -586,7 +639,7 @@ class LLMEnhancementEngine:
                 content={},
                 confidence_score=0.0,
                 rationale=f"Unknown prompt type: {request.prompt_type}",
-                processing_time=0.0
+                processing_time=0.0,
             )
 
     def _get_cache_key(self, request: LLMRequest) -> str:
@@ -599,16 +652,17 @@ class LLMEnhancementEngine:
 # Gap Analysis Models
 # ============================================================================
 
+
 class GapItem(BaseModel):
     """Individual gap requiring enhancement."""
 
     element: str = Field(..., description="Brand element with gap")
     impact: str = Field(..., pattern="^(low|medium|high|critical)$")
     description: str = Field(..., description="Detailed gap description")
-    enhancement_suggestion: Optional[str] = None
+    enhancement_suggestion: str | None = None
     estimated_improvement: float = Field(..., ge=0.0, le=1.0)
 
-    @field_validator('impact')
+    @field_validator("impact")
     @classmethod
     def validate_impact(cls, v):
         valid_impacts = ["low", "medium", "high", "critical"]
@@ -620,11 +674,21 @@ class GapItem(BaseModel):
 class BrandGapAnalysis(BaseModel):
     """Analysis of missing or incomplete brand elements."""
 
-    missing_elements: List[str] = Field(..., description="List of missing brand components")
-    incomplete_elements: List[str] = Field(..., description="List of elements needing enhancement")
-    completeness_score: float = Field(..., ge=0.0, le=1.0, description="Overall completeness percentage")
-    priority_gaps: List[GapItem] = Field(..., description="Prioritized list of gaps to address")
-    enhancement_opportunities: List[str] = Field(..., description="Areas for quality improvement")
+    missing_elements: list[str] = Field(
+        ..., description="List of missing brand components"
+    )
+    incomplete_elements: list[str] = Field(
+        ..., description="List of elements needing enhancement"
+    )
+    completeness_score: float = Field(
+        ..., ge=0.0, le=1.0, description="Overall completeness percentage"
+    )
+    priority_gaps: list[GapItem] = Field(
+        ..., description="Prioritized list of gaps to address"
+    )
+    enhancement_opportunities: list[str] = Field(
+        ..., description="Areas for quality improvement"
+    )
 
     class Config:
         schema_extra = {
@@ -636,9 +700,9 @@ class BrandGapAnalysis(BaseModel):
                     {
                         "element": "typography",
                         "impact": "high",
-                        "description": "No font preferences specified"
+                        "description": "No font preferences specified",
                     }
-                ]
+                ],
             }
         }
 
@@ -647,16 +711,19 @@ class BrandGapAnalysis(BaseModel):
 # Enhancement Models
 # ============================================================================
 
+
 class EnhancementSuggestion(BaseModel):
     """LLM-generated enhancement recommendation."""
 
     element_type: str = Field(..., description="Type of brand element being enhanced")
-    original_value: Optional[str] = None
-    suggested_value: Dict[str, Any] = Field(..., description="Enhanced element specification")
+    original_value: str | None = None
+    suggested_value: dict[str, Any] = Field(
+        ..., description="Enhanced element specification"
+    )
     confidence_score: float = Field(..., ge=0.0, le=1.0)
     rationale: str = Field(..., description="Explanation for the enhancement")
-    accessibility_score: Optional[float] = Field(None, ge=0.0, le=1.0)
-    alternatives: List[Dict[str, Any]] = Field(default_factory=list)
+    accessibility_score: float | None = Field(None, ge=0.0, le=1.0)
+    alternatives: list[dict[str, Any]] = Field(default_factory=list)
 
     class Config:
         schema_extra = {
@@ -666,11 +733,11 @@ class EnhancementSuggestion(BaseModel):
                 "suggested_value": {
                     "hex": "#1E40AF",
                     "name": "Trust Blue",
-                    "usage": "Primary brand color for headers and CTAs"
+                    "usage": "Primary brand color for headers and CTAs",
                 },
                 "confidence_score": 0.92,
                 "rationale": "This shade balances professionalism with approachability",
-                "accessibility_score": 0.85
+                "accessibility_score": 0.85,
             }
         }
 
@@ -679,39 +746,54 @@ class EnhancementSuggestion(BaseModel):
 # Font Selection Models
 # ============================================================================
 
+
 class GoogleFont(BaseModel):
     """Google Font data structure with validation."""
 
     family: str = Field(..., description="Font family name", min_length=1)
     category: str = Field(..., description="Font category")
-    variants: List[str] = Field(..., description="Available font weights and styles")
-    subsets: List[str] = Field(default_factory=list, description="Supported character subsets")
-    version: Optional[str] = Field(None, description="Font version from Google Fonts")
-    last_modified: Optional[str] = Field(None, description="Last modification date")
-    font_files: Optional[Dict[str, str]] = Field(None, description="Direct URLs to font files")
+    variants: list[str] = Field(..., description="Available font weights and styles")
+    subsets: list[str] = Field(
+        default_factory=list, description="Supported character subsets"
+    )
+    version: str | None = Field(None, description="Font version from Google Fonts")
+    last_modified: str | None = Field(None, description="Last modification date")
+    font_files: dict[str, str] | None = Field(
+        None, description="Direct URLs to font files"
+    )
 
-    @field_validator('category')
+    @field_validator("category")
     @classmethod
     def validate_category(cls, v):
-        valid_categories = ["serif", "sans-serif", "display", "handwriting", "monospace"]
+        valid_categories = [
+            "serif",
+            "sans-serif",
+            "display",
+            "handwriting",
+            "monospace",
+        ]
         if v not in valid_categories:
-            raise ValueError(f"Invalid font category '{v}'. Valid options: {', '.join(valid_categories)}")
+            raise ValueError(
+                f"Invalid font category '{v}'. Valid options: {', '.join(valid_categories)}"
+            )
         return v
 
-    @field_validator('variants')
+    @field_validator("variants")
     @classmethod
     def validate_variants(cls, v):
         if not v:
             raise ValueError("Font must have at least one variant")
 
-        valid_weights = ['100', '200', '300', '400', '500', '600', '700', '800', '900']
-        valid_styles = ['regular', 'italic']
-        valid_variants = valid_weights + valid_styles + [w + 'italic' for w in valid_weights]
+        valid_weights = ["100", "200", "300", "400", "500", "600", "700", "800", "900"]
+        valid_styles = ["regular", "italic"]
+        valid_variants = (
+            valid_weights + valid_styles + [w + "italic" for w in valid_weights]
+        )
 
         for variant in v:
             if variant not in valid_variants:
                 # Allow some flexibility for Google Fonts variants
-                if not (variant.endswith('italic') and variant[:-6] in valid_weights):
+                if not (variant.endswith("italic") and variant[:-6] in valid_weights):
                     # Log warning but don't fail for unknown variants
                     pass
         return v
@@ -727,7 +809,7 @@ class GoogleFont(BaseModel):
                 "last_modified": "2023-05-02",
                 "font_files": {
                     "400": "https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hiA.woff2"
-                }
+                },
             }
         }
 
@@ -735,22 +817,34 @@ class GoogleFont(BaseModel):
 class FontSelectionCriteria(BaseModel):
     """Criteria for selecting appropriate fonts based on brand characteristics."""
 
-    brand_personality: List[str] = Field(..., description="Brand personality traits", min_length=1)
-    target_audience: str = Field(..., description="Primary target audience", min_length=1)
-    brand_voice: str = Field(..., description="Brand voice characteristics", min_length=1)
-    enhancement_level: str = Field("moderate", description="Level of typography enhancement")
-    existing_colors: List[str] = Field(default_factory=list, description="Existing brand colors for harmony")
-    industry_context: Optional[str] = Field(None, description="Industry or domain context")
+    brand_personality: list[str] = Field(
+        ..., description="Brand personality traits", min_length=1
+    )
+    target_audience: str = Field(
+        ..., description="Primary target audience", min_length=1
+    )
+    brand_voice: str = Field(
+        ..., description="Brand voice characteristics", min_length=1
+    )
+    enhancement_level: str = Field(
+        "moderate", description="Level of typography enhancement"
+    )
+    existing_colors: list[str] = Field(
+        default_factory=list, description="Existing brand colors for harmony"
+    )
+    industry_context: str | None = Field(None, description="Industry or domain context")
 
-    @field_validator('enhancement_level')
+    @field_validator("enhancement_level")
     @classmethod
     def validate_enhancement_level(cls, v):
         valid_levels = ["minimal", "moderate", "comprehensive"]
         if v not in valid_levels:
-            raise ValueError(f"Invalid enhancement level '{v}'. Valid options: {', '.join(valid_levels)}")
+            raise ValueError(
+                f"Invalid enhancement level '{v}'. Valid options: {', '.join(valid_levels)}"
+            )
         return v
 
-    @field_validator('brand_personality')
+    @field_validator("brand_personality")
     @classmethod
     def validate_personality_traits(cls, v):
         if not v:
@@ -770,7 +864,7 @@ class FontSelectionCriteria(BaseModel):
                 "brand_voice": "authoritative yet approachable",
                 "enhancement_level": "moderate",
                 "existing_colors": ["#2563eb", "#10b981"],
-                "industry_context": "technology"
+                "industry_context": "technology",
             }
         }
 
@@ -781,22 +875,38 @@ class FontStyle(BaseModel):
     font_family: str = Field(..., description="Font family name")
     font_weight: str = Field(..., description="Font weight (CSS-compatible)")
     font_size: str = Field(..., description="Font size with CSS unit")
-    line_height: Union[str, float] = Field(..., description="Line height value")
-    margin_bottom: Optional[str] = Field(None, description="Bottom margin with CSS unit")
+    line_height: str | float = Field(..., description="Line height value")
+    margin_bottom: str | None = Field(None, description="Bottom margin with CSS unit")
 
-    @field_validator('font_weight')
+    @field_validator("font_weight")
     @classmethod
     def validate_font_weight(cls, v):
-        valid_weights = ['100', '200', '300', '400', '500', '600', '700', '800', '900', 'normal', 'bold']
+        valid_weights = [
+            "100",
+            "200",
+            "300",
+            "400",
+            "500",
+            "600",
+            "700",
+            "800",
+            "900",
+            "normal",
+            "bold",
+        ]
         if v not in valid_weights:
-            raise ValueError(f"Invalid font weight '{v}'. Valid options: {', '.join(valid_weights)}")
+            raise ValueError(
+                f"Invalid font weight '{v}'. Valid options: {', '.join(valid_weights)}"
+            )
         return v
 
-    @field_validator('font_size')
+    @field_validator("font_size")
     @classmethod
     def validate_font_size(cls, v):
-        if not any(v.endswith(unit) for unit in ['px', 'rem', 'em', '%']):
-            raise ValueError(f"Font size '{v}' must include a valid CSS unit (px, rem, em, %)")
+        if not any(v.endswith(unit) for unit in ["px", "rem", "em", "%"]):
+            raise ValueError(
+                f"Font size '{v}' must include a valid CSS unit (px, rem, em, %)"
+            )
         return v
 
     class Config:
@@ -806,7 +916,7 @@ class FontStyle(BaseModel):
                 "font_weight": "700",
                 "font_size": "3rem",
                 "line_height": "1.2",
-                "margin_bottom": "1.5rem"
+                "margin_bottom": "1.5rem",
             }
         }
 
@@ -815,25 +925,41 @@ class FontRecommendation(BaseModel):
     """Font recommendation with confidence scoring and rationale."""
 
     google_font: GoogleFont = Field(..., description="Selected Google Font")
-    confidence_score: float = Field(..., ge=0.0, le=1.0, description="Confidence in recommendation")
-    rationale: str = Field(..., description="Explanation for font selection", min_length=10)
-    use_cases: List[str] = Field(..., description="Recommended use cases for this font")
-    recommended_weights: List[str] = Field(..., description="Recommended font weights to use")
-    alternatives: List[GoogleFont] = Field(default_factory=list, description="Alternative font suggestions")
+    confidence_score: float = Field(
+        ..., ge=0.0, le=1.0, description="Confidence in recommendation"
+    )
+    rationale: str = Field(
+        ..., description="Explanation for font selection", min_length=10
+    )
+    use_cases: list[str] = Field(..., description="Recommended use cases for this font")
+    recommended_weights: list[str] = Field(
+        ..., description="Recommended font weights to use"
+    )
+    alternatives: list[GoogleFont] = Field(
+        default_factory=list, description="Alternative font suggestions"
+    )
 
-    @field_validator('confidence_score')
+    @field_validator("confidence_score")
     @classmethod
     def validate_confidence_score(cls, v):
         if v < 0.7:
             raise ValueError(f"Confidence score {v} is below minimum threshold of 0.7")
         return v
 
-    @field_validator('use_cases')
+    @field_validator("use_cases")
     @classmethod
     def validate_use_cases(cls, v):
         valid_use_cases = [
-            "headings", "body", "navigation", "CTAs", "captions",
-            "emphasis", "quotes", "labels", "buttons", "forms"
+            "headings",
+            "body",
+            "navigation",
+            "CTAs",
+            "captions",
+            "emphasis",
+            "quotes",
+            "labels",
+            "buttons",
+            "forms",
         ]
 
         for use_case in v:
@@ -851,12 +977,12 @@ class FontRecommendation(BaseModel):
                 "google_font": {
                     "family": "Inter",
                     "category": "sans-serif",
-                    "variants": ["400", "600", "700"]
+                    "variants": ["400", "600", "700"],
                 },
                 "confidence_score": 0.92,
                 "rationale": "Inter provides excellent readability for professional brands while maintaining modern appeal",
                 "use_cases": ["headings", "navigation", "CTAs"],
-                "recommended_weights": ["400", "600", "700"]
+                "recommended_weights": ["400", "600", "700"],
             }
         }
 
@@ -864,17 +990,27 @@ class FontRecommendation(BaseModel):
 class TypographyHierarchy(BaseModel):
     """Complete typography system with font hierarchy and styles."""
 
-    primary_font: Optional[FontRecommendation] = Field(None, description="Primary font for headings and emphasis")
-    secondary_font: Optional[FontRecommendation] = Field(None, description="Secondary font for body text")
-    accent_font: Optional[FontRecommendation] = Field(None, description="Accent font for special elements")
+    primary_font: FontRecommendation | None = Field(
+        None, description="Primary font for headings and emphasis"
+    )
+    secondary_font: FontRecommendation | None = Field(
+        None, description="Secondary font for body text"
+    )
+    accent_font: FontRecommendation | None = Field(
+        None, description="Accent font for special elements"
+    )
 
-    heading_styles: Dict[str, FontStyle] = Field(default_factory=dict, description="H1-H6 heading styles")
-    text_styles: Dict[str, FontStyle] = Field(default_factory=dict, description="Body, caption, emphasis styles")
+    heading_styles: dict[str, FontStyle] = Field(
+        default_factory=dict, description="H1-H6 heading styles"
+    )
+    text_styles: dict[str, FontStyle] = Field(
+        default_factory=dict, description="Body, caption, emphasis styles"
+    )
 
-    css_snippet: Optional[str] = Field(None, description="Ready-to-use CSS code")
-    font_urls: Optional[Dict[str, str]] = Field(None, description="Font loading URLs")
+    css_snippet: str | None = Field(None, description="Ready-to-use CSS code")
+    font_urls: dict[str, str] | None = Field(None, description="Font loading URLs")
 
-    @field_validator('heading_styles')
+    @field_validator("heading_styles")
     @classmethod
     def validate_heading_styles(cls, v):
         # Ensure required heading levels are present
@@ -882,7 +1018,9 @@ class TypographyHierarchy(BaseModel):
         missing_headings = [h for h in required_headings if h not in v]
 
         if missing_headings and v:  # Only validate if styles are provided
-            raise ValueError(f"Missing required heading styles: {', '.join(missing_headings)}")
+            raise ValueError(
+                f"Missing required heading styles: {', '.join(missing_headings)}"
+            )
         return v
 
     class Config:
@@ -891,14 +1029,14 @@ class TypographyHierarchy(BaseModel):
                 "primary_font": {
                     "google_font": {"family": "Inter", "category": "sans-serif"},
                     "confidence_score": 0.9,
-                    "rationale": "Modern, highly readable font"
+                    "rationale": "Modern, highly readable font",
                 },
                 "heading_styles": {
                     "h1": {
                         "font_family": "Inter",
                         "font_weight": "700",
                         "font_size": "3rem",
-                        "line_height": "1.2"
+                        "line_height": "1.2",
                     }
                 },
                 "text_styles": {
@@ -906,9 +1044,9 @@ class TypographyHierarchy(BaseModel):
                         "font_family": "Inter",
                         "font_weight": "400",
                         "font_size": "1rem",
-                        "line_height": "1.6"
+                        "line_height": "1.6",
                     }
-                }
+                },
             }
         }
 
@@ -917,11 +1055,15 @@ class FontSelectionMetadata(BaseModel):
     """Metadata about the font selection process."""
 
     selection_method: str = Field(..., description="Method used for selection")
-    processing_time: float = Field(..., description="Time taken for selection in seconds")
+    processing_time: float = Field(
+        ..., description="Time taken for selection in seconds"
+    )
     fonts_considered: int = Field(..., description="Number of fonts evaluated")
     api_calls_made: int = Field(default=0, description="Number of API calls made")
     cache_hit: bool = Field(default=False, description="Whether cache was used")
-    fallback_used: bool = Field(default=False, description="Whether fallback fonts were used")
+    fallback_used: bool = Field(
+        default=False, description="Whether fallback fonts were used"
+    )
 
     class Config:
         json_schema_extra = {
@@ -931,7 +1073,7 @@ class FontSelectionMetadata(BaseModel):
                 "fonts_considered": 45,
                 "api_calls_made": 1,
                 "cache_hit": True,
-                "fallback_used": False
+                "fallback_used": False,
             }
         }
 
@@ -939,8 +1081,12 @@ class FontSelectionMetadata(BaseModel):
 class FontSelectionResponse(BaseModel):
     """Complete response from font selection process."""
 
-    typography: TypographyHierarchy = Field(..., description="Selected typography system")
-    selection_metadata: FontSelectionMetadata = Field(..., description="Selection process metadata")
+    typography: TypographyHierarchy = Field(
+        ..., description="Selected typography system"
+    )
+    selection_metadata: FontSelectionMetadata = Field(
+        ..., description="Selection process metadata"
+    )
 
     class Config:
         json_schema_extra = {
@@ -948,14 +1094,14 @@ class FontSelectionResponse(BaseModel):
                 "typography": {
                     "primary_font": {
                         "google_font": {"family": "Inter", "category": "sans-serif"},
-                        "confidence_score": 0.9
+                        "confidence_score": 0.9,
                     }
                 },
                 "selection_metadata": {
                     "selection_method": "rule-based",
                     "processing_time": 1.23,
-                    "fonts_considered": 45
-                }
+                    "fonts_considered": 45,
+                },
             }
         }
 
@@ -963,21 +1109,25 @@ class FontSelectionResponse(BaseModel):
 # Font Selection Exceptions
 class FontSelectionError(Exception):
     """Base exception for font selection failures."""
+
     pass
 
 
 class GoogleFontsAPIError(FontSelectionError):
     """Google Fonts API access failures."""
+
     pass
 
 
 class CacheError(FontSelectionError):
     """Font cache operation failures."""
+
     pass
 
 
 class MatchingError(FontSelectionError):
     """Font matching algorithm failures."""
+
     pass
 
 
@@ -985,7 +1135,10 @@ class MatchingError(FontSelectionError):
 # Google Fonts API Client
 # ============================================================================
 
-def fetch_google_fonts(api_key: Optional[str] = None, force_refresh: bool = False) -> List[GoogleFont]:
+
+def fetch_google_fonts(
+    api_key: str | None = None, force_refresh: bool = False
+) -> list[GoogleFont]:
     """
     Fetch Google Fonts catalog from API with caching.
 
@@ -1004,10 +1157,12 @@ def fetch_google_fonts(api_key: Optional[str] = None, force_refresh: bool = Fals
 
     # Get API key from parameter or environment
     if api_key is None:
-        api_key = os.getenv('GOOGLE_FONTS_API_KEY')
+        api_key = os.getenv("GOOGLE_FONTS_API_KEY")
 
     if not api_key:
-        raise GoogleFontsAPIError("Google Fonts API key is required. Set GOOGLE_FONTS_API_KEY environment variable or provide api_key parameter.")
+        raise GoogleFontsAPIError(
+            "Google Fonts API key is required. Set GOOGLE_FONTS_API_KEY environment variable or provide api_key parameter."
+        )
 
     # Try cache first (unless force refresh)
     if not force_refresh:
@@ -1023,33 +1178,42 @@ def fetch_google_fonts(api_key: Optional[str] = None, force_refresh: bool = Fals
         if response.status_code == 403:
             raise GoogleFontsAPIError("Invalid Google Fonts API key or quota exceeded.")
         elif response.status_code == 429:
-            raise GoogleFontsAPIError("Google Fonts API rate limit exceeded. Please try again later.")
+            raise GoogleFontsAPIError(
+                "Google Fonts API rate limit exceeded. Please try again later."
+            )
         elif response.status_code != 200:
-            raise GoogleFontsAPIError(f"Google Fonts API request failed with status {response.status_code}: {response.text}")
+            raise GoogleFontsAPIError(
+                f"Google Fonts API request failed with status {response.status_code}: {response.text}"
+            )
 
         data = response.json()
-        items = data.get('items', [])
+        items = data.get("items", [])
 
         if len(items) < 800:  # Sanity check
-            raise GoogleFontsAPIError(f"Received only {len(items)} fonts, expected at least 800. API may be incomplete.")
+            raise GoogleFontsAPIError(
+                f"Received only {len(items)} fonts, expected at least 800. API may be incomplete."
+            )
 
         # Convert to GoogleFont models
         fonts = []
         for item in items:
             try:
                 font = GoogleFont(
-                    family=item.get('family', ''),
-                    category=item.get('category', 'sans-serif'),
-                    variants=item.get('variants', ['400']),
-                    subsets=item.get('subsets', ['latin']),
-                    version=item.get('version'),
-                    last_modified=item.get('lastModified'),
-                    font_files=item.get('files', {})
+                    family=item.get("family", ""),
+                    category=item.get("category", "sans-serif"),
+                    variants=item.get("variants", ["400"]),
+                    subsets=item.get("subsets", ["latin"]),
+                    version=item.get("version"),
+                    last_modified=item.get("lastModified"),
+                    font_files=item.get("files", {}),
                 )
                 fonts.append(font)
             except Exception as e:
                 # Log font parsing error but continue
-                print(f"Warning: Failed to parse font {item.get('family', 'unknown')}: {e}", file=sys.stderr)
+                print(
+                    f"Warning: Failed to parse font {item.get('family', 'unknown')}: {e}",
+                    file=sys.stderr,
+                )
                 continue
 
         # Update cache with fresh data
@@ -1058,16 +1222,20 @@ def fetch_google_fonts(api_key: Optional[str] = None, force_refresh: bool = Fals
         return fonts
 
     except requests.exceptions.Timeout:
-        raise GoogleFontsAPIError("Google Fonts API request timed out. Please check your internet connection.")
+        raise GoogleFontsAPIError(
+            "Google Fonts API request timed out. Please check your internet connection."
+        )
     except requests.exceptions.ConnectionError:
-        raise GoogleFontsAPIError("Failed to connect to Google Fonts API. Please check your internet connection.")
+        raise GoogleFontsAPIError(
+            "Failed to connect to Google Fonts API. Please check your internet connection."
+        )
     except requests.exceptions.RequestException as e:
         raise GoogleFontsAPIError(f"Google Fonts API request failed: {e}")
     except Exception as e:
         raise GoogleFontsAPIError(f"Unexpected error fetching Google Fonts: {e}")
 
 
-def get_cached_fonts(max_age_hours: int = 24) -> Optional[List[GoogleFont]]:
+def get_cached_fonts(max_age_hours: int = 24) -> list[GoogleFont] | None:
     """
     Retrieve fonts from local cache if fresh.
 
@@ -1093,7 +1261,7 @@ def get_cached_fonts(max_age_hours: int = 24) -> Optional[List[GoogleFont]]:
             return None  # Cache is stale
 
         # Load and parse cache
-        with open(cache_file, 'r', encoding='utf-8') as f:
+        with open(cache_file, encoding="utf-8") as f:
             data = json.load(f)
 
         # Convert to GoogleFont models
@@ -1115,7 +1283,7 @@ def get_cached_fonts(max_age_hours: int = 24) -> Optional[List[GoogleFont]]:
         return None
 
 
-def update_font_cache(fonts: List[GoogleFont]) -> bool:
+def update_font_cache(fonts: list[GoogleFont]) -> bool:
     """
     Update local font cache with fresh data.
 
@@ -1138,12 +1306,15 @@ def update_font_cache(fonts: List[GoogleFont]) -> bool:
                 font_dict = font.model_dump()
                 font_data.append(font_dict)
             except Exception as e:
-                print(f"Warning: Failed to serialize font {font.family}: {e}", file=sys.stderr)
+                print(
+                    f"Warning: Failed to serialize font {font.family}: {e}",
+                    file=sys.stderr,
+                )
                 continue
 
         # Write to temporary file first, then move (atomic operation)
-        temp_file = cache_file.with_suffix('.tmp')
-        with open(temp_file, 'w', encoding='utf-8') as f:
+        temp_file = cache_file.with_suffix(".tmp")
+        with open(temp_file, "w", encoding="utf-8") as f:
             json.dump(font_data, f, indent=2, ensure_ascii=False)
 
         # Atomic move
@@ -1161,11 +1332,12 @@ def update_font_cache(fonts: List[GoogleFont]) -> bool:
 # Font Matching and Selection Engine
 # ============================================================================
 
+
 def match_fonts_to_personality(
-    personality_traits: List[str],
-    available_fonts: List[GoogleFont],
-    enhancement_level: str = "moderate"
-) -> List[FontRecommendation]:
+    personality_traits: list[str],
+    available_fonts: list[GoogleFont],
+    enhancement_level: str = "moderate",
+) -> list[FontRecommendation]:
     """
     Match fonts to brand personality using rule-based + LLM approach.
 
@@ -1205,17 +1377,17 @@ def match_fonts_to_personality(
         if safe_fonts:
             font_scores = [(safe_fonts[0], 0.7)]  # Minimum viable confidence
         else:
-            raise MatchingError("No suitable fonts found and no safe fallbacks available")
+            raise MatchingError(
+                "No suitable fonts found and no safe fallbacks available"
+            )
 
     # Sort by score (highest first)
     font_scores.sort(key=lambda x: x[1], reverse=True)
 
     # Determine number of recommendations based on enhancement level
-    max_recommendations = {
-        "minimal": 1,
-        "moderate": 3,
-        "comprehensive": 5
-    }.get(enhancement_level, 3)
+    max_recommendations = {"minimal": 1, "moderate": 3, "comprehensive": 5}.get(
+        enhancement_level, 3
+    )
 
     # Create recommendations
     recommendations = []
@@ -1236,13 +1408,16 @@ def match_fonts_to_personality(
                 rationale=rationale,
                 use_cases=use_cases,
                 recommended_weights=recommended_weights,
-                alternatives=[]  # Could be populated later
+                alternatives=[],  # Could be populated later
             )
             recommendations.append(recommendation)
 
         except Exception as e:
             # Skip this font if recommendation creation fails
-            print(f"Warning: Failed to create recommendation for {font.family}: {e}", file=sys.stderr)
+            print(
+                f"Warning: Failed to create recommendation for {font.family}: {e}",
+                file=sys.stderr,
+            )
             continue
 
     if not recommendations:
@@ -1251,7 +1426,7 @@ def match_fonts_to_personality(
     return recommendations
 
 
-def _calculate_category_weights(traits: List[str]) -> Dict[str, float]:
+def _calculate_category_weights(traits: list[str]) -> dict[str, float]:
     """Calculate font category weights based on personality traits."""
 
     # Base weights (neutral)
@@ -1260,59 +1435,87 @@ def _calculate_category_weights(traits: List[str]) -> Dict[str, float]:
         "serif": 0.3,
         "display": 0.15,
         "handwriting": 0.1,
-        "monospace": 0.05
+        "monospace": 0.05,
     }
 
     # Trait-based adjustments
     trait_mappings = {
         # Professional traits favor sans-serif and serif
         "professional": {"sans-serif": +0.3, "serif": +0.2, "display": -0.1},
-        "corporate": {"sans-serif": +0.3, "serif": +0.2, "display": -0.2, "handwriting": -0.1},
+        "corporate": {
+            "sans-serif": +0.3,
+            "serif": +0.2,
+            "display": -0.2,
+            "handwriting": -0.1,
+        },
         "business": {"sans-serif": +0.2, "serif": +0.2, "display": -0.1},
-        "formal": {"serif": +0.3, "sans-serif": +0.1, "display": -0.1, "handwriting": -0.2},
+        "formal": {
+            "serif": +0.3,
+            "sans-serif": +0.1,
+            "display": -0.1,
+            "handwriting": -0.2,
+        },
         "trustworthy": {"serif": +0.2, "sans-serif": +0.2, "display": -0.1},
-
         # Modern traits favor sans-serif
         "modern": {"sans-serif": +0.3, "display": +0.1, "serif": -0.1},
         "contemporary": {"sans-serif": +0.2, "display": +0.1, "serif": -0.1},
         "clean": {"sans-serif": +0.3, "serif": -0.1, "display": -0.1},
         "minimal": {"sans-serif": +0.3, "serif": -0.2, "display": -0.2},
         "simple": {"sans-serif": +0.2, "serif": -0.1, "display": -0.1},
-
         # Creative traits favor display and handwriting
         "creative": {"display": +0.3, "handwriting": +0.2, "sans-serif": -0.1},
         "artistic": {"display": +0.3, "handwriting": +0.3, "serif": -0.1},
         "expressive": {"display": +0.2, "handwriting": +0.2},
         "playful": {"display": +0.2, "handwriting": +0.1, "serif": -0.2},
         "fun": {"display": +0.2, "handwriting": +0.1, "serif": -0.1},
-
         # Traditional traits favor serif
         "traditional": {"serif": +0.4, "sans-serif": -0.1, "display": -0.2},
         "classic": {"serif": +0.3, "sans-serif": -0.1, "display": -0.1},
         "elegant": {"serif": +0.3, "display": +0.1, "handwriting": -0.1},
         "sophisticated": {"serif": +0.2, "sans-serif": +0.1, "display": -0.1},
         "luxury": {"serif": +0.2, "display": +0.1, "handwriting": -0.2},
-
         # Technical traits favor monospace and sans-serif
-        "technical": {"monospace": +0.3, "sans-serif": +0.2, "serif": -0.1, "handwriting": -0.2},
-        "code": {"monospace": +0.4, "sans-serif": +0.1, "serif": -0.2, "handwriting": -0.2},
+        "technical": {
+            "monospace": +0.3,
+            "sans-serif": +0.2,
+            "serif": -0.1,
+            "handwriting": -0.2,
+        },
+        "code": {
+            "monospace": +0.4,
+            "sans-serif": +0.1,
+            "serif": -0.2,
+            "handwriting": -0.2,
+        },
         "digital": {"sans-serif": +0.2, "monospace": +0.1, "serif": -0.1},
         "tech": {"sans-serif": +0.2, "monospace": +0.1, "serif": -0.1},
-
         # Personal traits favor handwriting
         "personal": {"handwriting": +0.3, "serif": +0.1, "sans-serif": -0.1},
         "handwritten": {"handwriting": +0.4, "display": -0.2, "sans-serif": -0.2},
         "informal": {"handwriting": +0.2, "display": +0.1, "serif": -0.2},
-
         # Bold traits favor display
         "bold": {"display": +0.2, "sans-serif": +0.1, "serif": -0.1},
         "strong": {"sans-serif": +0.2, "display": +0.1, "serif": -0.1},
         "impactful": {"display": +0.2, "sans-serif": +0.1},
-
         # Readable traits favor sans-serif
-        "readable": {"sans-serif": +0.2, "serif": +0.1, "display": -0.1, "handwriting": -0.2},
-        "clear": {"sans-serif": +0.2, "serif": +0.1, "display": -0.1, "handwriting": -0.1},
-        "legible": {"sans-serif": +0.2, "serif": +0.1, "display": -0.1, "handwriting": -0.2},
+        "readable": {
+            "sans-serif": +0.2,
+            "serif": +0.1,
+            "display": -0.1,
+            "handwriting": -0.2,
+        },
+        "clear": {
+            "sans-serif": +0.2,
+            "serif": +0.1,
+            "display": -0.1,
+            "handwriting": -0.1,
+        },
+        "legible": {
+            "sans-serif": +0.2,
+            "serif": +0.1,
+            "display": -0.1,
+            "handwriting": -0.2,
+        },
     }
 
     # Apply trait adjustments
@@ -1329,7 +1532,9 @@ def _calculate_category_weights(traits: List[str]) -> Dict[str, float]:
     return weights
 
 
-def _score_font_for_personality(font: GoogleFont, traits: List[str], category_weights: Dict[str, float]) -> float:
+def _score_font_for_personality(
+    font: GoogleFont, traits: list[str], category_weights: dict[str, float]
+) -> float:
     """Score a font based on how well it matches the personality traits."""
 
     # Base score from category match
@@ -1341,37 +1546,55 @@ def _score_font_for_personality(font: GoogleFont, traits: List[str], category_we
 
     # Professional family names
     if any(trait in ["professional", "corporate", "business"] for trait in traits):
-        if any(word in family_lower for word in ["inter", "roboto", "open", "source", "system", "work"]):
+        if any(
+            word in family_lower
+            for word in ["inter", "roboto", "open", "source", "system", "work"]
+        ):
             family_bonus += 0.1
 
     # Modern family names
-    if any(trait in ["modern", "contemporary", "clean"] for trait in traits):
-        if any(word in family_lower for word in ["inter", "montserrat", "lato", "nunito", "poppins"]):
-            family_bonus += 0.1
+    if any(trait in ["modern", "contemporary", "clean"] for trait in traits) and any(
+        word in family_lower
+        for word in ["inter", "montserrat", "lato", "nunito", "poppins"]
+    ):
+        family_bonus += 0.1
 
     # Creative family names
-    if any(trait in ["creative", "artistic", "playful"] for trait in traits):
-        if any(word in family_lower for word in ["pacifico", "dancing", "lobster", "comfortaa", "quicksand"]):
-            family_bonus += 0.1
+    if any(trait in ["creative", "artistic", "playful"] for trait in traits) and any(
+        word in family_lower
+        for word in ["pacifico", "dancing", "lobster", "comfortaa", "quicksand"]
+    ):
+        family_bonus += 0.1
 
     # Traditional family names
-    if any(trait in ["traditional", "classic", "elegant"] for trait in traits):
-        if any(word in family_lower for word in ["times", "georgia", "playfair", "libre", "crimson"]):
-            family_bonus += 0.1
+    if any(trait in ["traditional", "classic", "elegant"] for trait in traits) and any(
+        word in family_lower
+        for word in ["times", "georgia", "playfair", "libre", "crimson"]
+    ):
+        family_bonus += 0.1
 
     # Variant richness bonus (more weights = more versatile)
     variant_bonus = min(0.1, len(font.variants) * 0.01)
 
     # Popularity bonus for well-known fonts
-    popular_fonts = ["inter", "roboto", "open sans", "lato", "montserrat", "source sans pro"]
-    popularity_bonus = 0.05 if any(popular in family_lower for popular in popular_fonts) else 0.0
+    popular_fonts = [
+        "inter",
+        "roboto",
+        "open sans",
+        "lato",
+        "montserrat",
+        "source sans pro",
+    ]
+    popularity_bonus = (
+        0.05 if any(popular in family_lower for popular in popular_fonts) else 0.0
+    )
 
     final_score = base_score + family_bonus + variant_bonus + popularity_bonus
 
     return min(1.0, final_score)
 
 
-def _generate_font_rationale(font: GoogleFont, traits: List[str], score: float) -> str:
+def _generate_font_rationale(font: GoogleFont, traits: list[str], score: float) -> str:
     """Generate human-readable rationale for font selection."""
 
     # Base rationale based on category
@@ -1380,10 +1603,12 @@ def _generate_font_rationale(font: GoogleFont, traits: List[str], score: float) 
         "serif": f"{font.family} is an elegant serif font that conveys tradition and sophistication",
         "display": f"{font.family} is a distinctive display font that makes a strong visual impact",
         "handwriting": f"{font.family} offers a personal, handwritten feel that adds warmth",
-        "monospace": f"{font.family} is a technical monospace font ideal for code and data"
+        "monospace": f"{font.family} is a technical monospace font ideal for code and data",
     }
 
-    base_rationale = category_rationales.get(font.category, f"{font.family} is a versatile font")
+    base_rationale = category_rationales.get(
+        font.category, f"{font.family} is a versatile font"
+    )
 
     # Add personality-specific reasoning
     trait_reasons = []
@@ -1421,7 +1646,7 @@ def _generate_font_rationale(font: GoogleFont, traits: List[str], score: float) 
     return full_rationale
 
 
-def _determine_use_cases(font: GoogleFont, traits: List[str]) -> List[str]:
+def _determine_use_cases(font: GoogleFont, traits: list[str]) -> list[str]:
     """Determine appropriate use cases for a font based on its characteristics."""
 
     use_cases = []
@@ -1455,7 +1680,7 @@ def _determine_use_cases(font: GoogleFont, traits: List[str]) -> List[str]:
     return list(set(use_cases))  # Remove duplicates
 
 
-def _select_font_weights(font: GoogleFont, traits: List[str]) -> List[str]:
+def _select_font_weights(font: GoogleFont, traits: list[str]) -> list[str]:
     """Select appropriate font weights based on available variants and traits."""
 
     available_weights = [v for v in font.variants if v.isdigit()]
@@ -1520,10 +1745,11 @@ def _select_font_weights(font: GoogleFont, traits: List[str]) -> List[str]:
 # Typography System Generator
 # ============================================================================
 
+
 def generate_typography_hierarchy(
     primary_font: FontRecommendation,
-    secondary_font: Optional[FontRecommendation] = None,
-    enhancement_level: str = "moderate"
+    secondary_font: FontRecommendation | None = None,
+    enhancement_level: str = "moderate",
 ) -> TypographyHierarchy:
     """
     Generate complete typography hierarchy from font recommendations.
@@ -1540,10 +1766,14 @@ def generate_typography_hierarchy(
     heading_styles = _generate_heading_styles(primary_font, enhancement_level)
 
     # Generate text styles
-    text_styles = _generate_text_styles(secondary_font or primary_font, enhancement_level)
+    text_styles = _generate_text_styles(
+        secondary_font or primary_font, enhancement_level
+    )
 
     # Generate CSS snippet
-    css_snippet = _generate_css_snippet(primary_font, secondary_font, heading_styles, text_styles)
+    css_snippet = _generate_css_snippet(
+        primary_font, secondary_font, heading_styles, text_styles
+    )
 
     # Generate font URLs
     font_urls = _generate_font_urls(primary_font, secondary_font)
@@ -1555,19 +1785,25 @@ def generate_typography_hierarchy(
         heading_styles=heading_styles,
         text_styles=text_styles,
         css_snippet=css_snippet,
-        font_urls=font_urls
+        font_urls=font_urls,
     )
 
 
-def _generate_heading_styles(font_rec: FontRecommendation, enhancement_level: str) -> Dict[str, FontStyle]:
+def _generate_heading_styles(
+    font_rec: FontRecommendation, enhancement_level: str
+) -> dict[str, FontStyle]:
     """Generate H1-H6 heading styles with appropriate sizing."""
 
     font_family = font_rec.google_font.family
 
     # Determine which weights to use
     weights = font_rec.recommended_weights
-    bold_weight = next((w for w in weights if int(w) >= 600), weights[-1] if weights else "700")
-    regular_weight = next((w for w in weights if int(w) <= 500), weights[0] if weights else "400")
+    bold_weight = next(
+        (w for w in weights if int(w) >= 600), weights[-1] if weights else "700"
+    )
+    regular_weight = next(
+        (w for w in weights if int(w) <= 500), weights[0] if weights else "400"
+    )
 
     # Base font sizes (rem) with scaling ratios
     base_sizes = {
@@ -1576,18 +1812,11 @@ def _generate_heading_styles(font_rec: FontRecommendation, enhancement_level: st
         "h3": 1.875,
         "h4": 1.5,
         "h5": 1.25,
-        "h6": 1.125
+        "h6": 1.125,
     }
 
     # Line height ratios for readability
-    line_heights = {
-        "h1": 1.2,
-        "h2": 1.25,
-        "h3": 1.3,
-        "h4": 1.35,
-        "h5": 1.4,
-        "h6": 1.45
-    }
+    line_heights = {"h1": 1.2, "h2": 1.25, "h3": 1.3, "h4": 1.35, "h5": 1.4, "h6": 1.45}
 
     # Margin bottom spacing
     margin_bottoms = {
@@ -1596,7 +1825,7 @@ def _generate_heading_styles(font_rec: FontRecommendation, enhancement_level: st
         "h3": "1rem",
         "h4": "0.75rem",
         "h5": "0.5rem",
-        "h6": "0.5rem"
+        "h6": "0.5rem",
     }
 
     # Determine heading levels based on enhancement level
@@ -1617,22 +1846,26 @@ def _generate_heading_styles(font_rec: FontRecommendation, enhancement_level: st
             font_weight=weight,
             font_size=f"{base_sizes[heading]}rem",
             line_height=line_heights[heading],
-            margin_bottom=margin_bottoms[heading]
+            margin_bottom=margin_bottoms[heading],
         )
 
     return styles
 
 
-def _generate_text_styles(font_rec: FontRecommendation, enhancement_level: str) -> Dict[str, FontStyle]:
+def _generate_text_styles(
+    font_rec: FontRecommendation, enhancement_level: str
+) -> dict[str, FontStyle]:
     """Generate body and text styles."""
 
     font_family = font_rec.google_font.family
 
     # Determine weights
     weights = font_rec.recommended_weights
-    regular_weight = next((w for w in weights if int(w) <= 500), weights[0] if weights else "400")
+    regular_weight = next(
+        (w for w in weights if int(w) <= 500), weights[0] if weights else "400"
+    )
     medium_weight = next((w for w in weights if 500 <= int(w) <= 600), regular_weight)
-    bold_weight = next((w for w in weights if int(w) >= 600), weights[-1] if weights else "700")
+    next((w for w in weights if int(w) >= 600), weights[-1] if weights else "700")
 
     # Base text styles
     base_styles = {
@@ -1641,58 +1874,60 @@ def _generate_text_styles(font_rec: FontRecommendation, enhancement_level: str) 
             font_weight=regular_weight,
             font_size="1rem",
             line_height=1.6,
-            margin_bottom="1rem"
+            margin_bottom="1rem",
         ),
         "caption": FontStyle(
             font_family=font_family,
             font_weight=regular_weight,
             font_size="0.875rem",
             line_height=1.5,
-            margin_bottom="0.5rem"
+            margin_bottom="0.5rem",
         ),
         "emphasis": FontStyle(
             font_family=font_family,
             font_weight=medium_weight,
             font_size="1rem",
             line_height=1.6,
-            margin_bottom=None
-        )
+            margin_bottom=None,
+        ),
     }
 
     # Add more styles for comprehensive level
     if enhancement_level == "comprehensive":
-        base_styles.update({
-            "lead": FontStyle(
-                font_family=font_family,
-                font_weight=regular_weight,
-                font_size="1.25rem",
-                line_height=1.7,
-                margin_bottom="1.5rem"
-            ),
-            "small": FontStyle(
-                font_family=font_family,
-                font_weight=regular_weight,
-                font_size="0.75rem",
-                line_height=1.4,
-                margin_bottom="0.5rem"
-            ),
-            "blockquote": FontStyle(
-                font_family=font_family,
-                font_weight=medium_weight,
-                font_size="1.125rem",
-                line_height=1.65,
-                margin_bottom="1rem"
-            )
-        })
+        base_styles.update(
+            {
+                "lead": FontStyle(
+                    font_family=font_family,
+                    font_weight=regular_weight,
+                    font_size="1.25rem",
+                    line_height=1.7,
+                    margin_bottom="1.5rem",
+                ),
+                "small": FontStyle(
+                    font_family=font_family,
+                    font_weight=regular_weight,
+                    font_size="0.75rem",
+                    line_height=1.4,
+                    margin_bottom="0.5rem",
+                ),
+                "blockquote": FontStyle(
+                    font_family=font_family,
+                    font_weight=medium_weight,
+                    font_size="1.125rem",
+                    line_height=1.65,
+                    margin_bottom="1rem",
+                ),
+            }
+        )
 
     return base_styles
 
 
 def _generate_css_snippet(
     primary_font: FontRecommendation,
-    secondary_font: Optional[FontRecommendation],
-    heading_styles: Dict[str, FontStyle],
-    text_styles: Dict[str, FontStyle]
+    secondary_font: FontRecommendation | None,
+    heading_styles: dict[str, FontStyle],
+    text_styles: dict[str, FontStyle],
 ) -> str:
     """Generate ready-to-use CSS snippet."""
 
@@ -1700,7 +1935,10 @@ def _generate_css_snippet(
 
     # Google Fonts import
     fonts_to_import = [primary_font]
-    if secondary_font and secondary_font.google_font.family != primary_font.google_font.family:
+    if (
+        secondary_font
+        and secondary_font.google_font.family != primary_font.google_font.family
+    ):
         fonts_to_import.append(secondary_font)
 
     import_urls = []
@@ -1710,15 +1948,23 @@ def _generate_css_snippet(
         import_urls.append(f"family={family}{weights}")
 
     if import_urls:
-        google_fonts_url = "https://fonts.googleapis.com/css2?" + "&".join(import_urls) + "&display=swap"
+        google_fonts_url = (
+            "https://fonts.googleapis.com/css2?"
+            + "&".join(import_urls)
+            + "&display=swap"
+        )
         css_lines.append(f"@import url('{google_fonts_url}');")
         css_lines.append("")
 
     # CSS custom properties for easier customization
     css_lines.append(":root {")
-    css_lines.append(f"  --font-primary: '{primary_font.google_font.family}', sans-serif;")
+    css_lines.append(
+        f"  --font-primary: '{primary_font.google_font.family}', sans-serif;"
+    )
     if secondary_font:
-        css_lines.append(f"  --font-secondary: '{secondary_font.google_font.family}', sans-serif;")
+        css_lines.append(
+            f"  --font-secondary: '{secondary_font.google_font.family}', sans-serif;"
+        )
     css_lines.append("}")
     css_lines.append("")
 
@@ -1751,9 +1997,8 @@ def _generate_css_snippet(
 
 
 def _generate_font_urls(
-    primary_font: FontRecommendation,
-    secondary_font: Optional[FontRecommendation]
-) -> Dict[str, str]:
+    primary_font: FontRecommendation, secondary_font: FontRecommendation | None
+) -> dict[str, str]:
     """Generate font loading URLs for web usage."""
 
     urls = {}
@@ -1761,17 +2006,27 @@ def _generate_font_urls(
     # Primary font CSS URL
     family = primary_font.google_font.family.replace(" ", "+")
     weights = ":wght@" + ";".join(primary_font.recommended_weights)
-    urls["primary_css"] = f"https://fonts.googleapis.com/css2?family={family}{weights}&display=swap"
+    urls[
+        "primary_css"
+    ] = f"https://fonts.googleapis.com/css2?family={family}{weights}&display=swap"
 
     # Secondary font CSS URL
-    if secondary_font and secondary_font.google_font.family != primary_font.google_font.family:
+    if (
+        secondary_font
+        and secondary_font.google_font.family != primary_font.google_font.family
+    ):
         family = secondary_font.google_font.family.replace(" ", "+")
         weights = ":wght@" + ";".join(secondary_font.recommended_weights)
-        urls["secondary_css"] = f"https://fonts.googleapis.com/css2?family={family}{weights}&display=swap"
+        urls[
+            "secondary_css"
+        ] = f"https://fonts.googleapis.com/css2?family={family}{weights}&display=swap"
 
     # Combined URL for both fonts
     fonts_to_combine = [primary_font]
-    if secondary_font and secondary_font.google_font.family != primary_font.google_font.family:
+    if (
+        secondary_font
+        and secondary_font.google_font.family != primary_font.google_font.family
+    ):
         fonts_to_combine.append(secondary_font)
 
     combined_families = []
@@ -1781,7 +2036,9 @@ def _generate_font_urls(
         combined_families.append(f"family={family}{weights}")
 
     if combined_families:
-        urls["combined_css"] = f"https://fonts.googleapis.com/css2?{' &'.join(combined_families)}&display=swap"
+        urls[
+            "combined_css"
+        ] = f"https://fonts.googleapis.com/css2?{' &'.join(combined_families)}&display=swap"
 
     return urls
 
@@ -1790,9 +2047,10 @@ def _generate_font_urls(
 # Main Font Selection Function
 # ============================================================================
 
+
 def select_fonts(
     criteria: FontSelectionCriteria,
-    existing_typography: Optional[TypographyHierarchy] = None
+    existing_typography: TypographyHierarchy | None = None,
 ) -> FontSelectionResponse:
     """
     Select appropriate Google Fonts based on brand criteria.
@@ -1820,11 +2078,10 @@ def select_fonts(
                 fonts_considered=0,
                 api_calls_made=0,
                 cache_hit=True,
-                fallback_used=False
+                fallback_used=False,
             )
             return FontSelectionResponse(
-                typography=existing_typography,
-                selection_metadata=metadata
+                typography=existing_typography, selection_metadata=metadata
             )
 
         # Get available fonts
@@ -1844,20 +2101,18 @@ def select_fonts(
 
         # Match fonts to personality
         font_recommendations = match_fonts_to_personality(
-            criteria.brand_personality,
-            available_fonts,
-            criteria.enhancement_level
+            criteria.brand_personality, available_fonts, criteria.enhancement_level
         )
 
         # Select primary and secondary fonts
         primary_font = font_recommendations[0]
-        secondary_font = font_recommendations[1] if len(font_recommendations) > 1 else None
+        secondary_font = (
+            font_recommendations[1] if len(font_recommendations) > 1 else None
+        )
 
         # Generate typography hierarchy
         typography = generate_typography_hierarchy(
-            primary_font,
-            secondary_font,
-            criteria.enhancement_level
+            primary_font, secondary_font, criteria.enhancement_level
         )
 
         processing_time = time.time() - start_time
@@ -1869,13 +2124,10 @@ def select_fonts(
             fonts_considered=len(available_fonts),
             api_calls_made=api_calls_made,
             cache_hit=cache_hit,
-            fallback_used=False
+            fallback_used=False,
         )
 
-        return FontSelectionResponse(
-            typography=typography,
-            selection_metadata=metadata
-        )
+        return FontSelectionResponse(typography=typography, selection_metadata=metadata)
 
     except Exception as e:
         # Comprehensive fallback system with multiple options
@@ -1884,26 +2136,26 @@ def select_fonts(
                 "family": "Inter",
                 "category": "sans-serif",
                 "variants": ["300", "400", "600", "700"],
-                "rationale": "Inter is a modern, highly readable font designed for user interfaces and digital displays."
+                "rationale": "Inter is a modern, highly readable font designed for user interfaces and digital displays.",
             },
             {
                 "family": "Open Sans",
                 "category": "sans-serif",
                 "variants": ["400", "600", "700"],
-                "rationale": "Open Sans is a reliable, widely-supported font that ensures readability across all platforms."
+                "rationale": "Open Sans is a reliable, widely-supported font that ensures readability across all platforms.",
             },
             {
                 "family": "Roboto",
                 "category": "sans-serif",
                 "variants": ["300", "400", "500", "700"],
-                "rationale": "Roboto provides excellent readability and is optimized for both web and mobile interfaces."
+                "rationale": "Roboto provides excellent readability and is optimized for both web and mobile interfaces.",
             },
             {
                 "family": "Arial",
                 "category": "sans-serif",
                 "variants": ["400", "700"],
-                "rationale": "Arial is a universal system font that provides maximum compatibility across all devices."
-            }
+                "rationale": "Arial is a universal system font that provides maximum compatibility across all devices.",
+            },
         ]
 
         for fallback_data in fallback_fonts:
@@ -1911,7 +2163,7 @@ def select_fonts(
                 fallback_font = GoogleFont(
                     family=fallback_data["family"],
                     category=fallback_data["category"],
-                    variants=fallback_data["variants"]
+                    variants=fallback_data["variants"],
                 )
 
                 fallback_recommendation = FontRecommendation(
@@ -1919,13 +2171,11 @@ def select_fonts(
                     confidence_score=0.7,
                     rationale=fallback_data["rationale"],
                     use_cases=["headings", "body"],
-                    recommended_weights=fallback_data["variants"]
+                    recommended_weights=fallback_data["variants"],
                 )
 
                 typography = generate_typography_hierarchy(
-                    fallback_recommendation,
-                    None,
-                    criteria.enhancement_level
+                    fallback_recommendation, None, criteria.enhancement_level
                 )
 
                 processing_time = time.time() - start_time
@@ -1935,15 +2185,14 @@ def select_fonts(
                     fonts_considered=len(fallback_fonts),
                     api_calls_made=0,
                     cache_hit=False,
-                    fallback_used=True
+                    fallback_used=True,
                 )
 
                 return FontSelectionResponse(
-                    typography=typography,
-                    selection_metadata=metadata
+                    typography=typography, selection_metadata=metadata
                 )
 
-            except Exception as fallback_error:
+            except Exception:
                 # Try next fallback font
                 continue
 
@@ -1955,12 +2204,16 @@ def select_fonts(
 # CLI Argument Parser
 # ============================================================================
 
+
 def create_argument_parser(config: DeveloperConfig) -> argparse.ArgumentParser:
     """Create and configure the argument parser with LLM enhancement options."""
     parser = argparse.ArgumentParser(
         description="LLM-Enhanced Brand Identity Processing Tool",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=f"""
+# Script location:
+  agents/brand_identity_generator/brand_identity_generator.py
+
 Examples:
   # Standard processing
   python brand_identity_generator.py brand.md -o output.json
@@ -1984,112 +2237,105 @@ Configuration:
   Override with environment variables:
     OPENAI_API_KEY, ANTHROPIC_API_KEY (API keys)
     BRAND_TOOL_LLM_PROVIDER, BRAND_TOOL_OUTPUT_DIR (settings)
-        """
+        """,
     )
 
     # Core arguments
     parser.add_argument(
-        "input_file",
-        nargs="?",
-        help="Input markdown file with brand description"
+        "input_file", nargs="?", help="Input markdown file with brand description"
     )
     parser.add_argument(
-        "-o", "--output",
-        help=f"Output JSON file path (default: uses {config.default_output_dir})"
+        "-o",
+        "--output",
+        help=f"Output JSON file path (default: uses {config.default_output_dir})",
     )
 
     # LLM Enhancement Control
     parser.add_argument(
-        "--enhance", "-e",
-        action="store_true",
-        help="Enable LLM enhancement processing"
+        "--enhance", "-e", action="store_true", help="Enable LLM enhancement processing"
     )
     parser.add_argument(
         "--enhancement-level",
         choices=["minimal", "moderate", "comprehensive"],
         default=config.default_enhancement_level,
-        help=f"Set enhancement intensity (default: {config.default_enhancement_level})"
+        help=f"Set enhancement intensity (default: {config.default_enhancement_level})",
     )
     parser.add_argument(
         "--llm-provider",
         choices=["openai", "anthropic", "local"],
         default=config.llm_provider,
-        help=f"Choose LLM service provider (default: {config.llm_provider})"
+        help=f"Choose LLM service provider (default: {config.llm_provider})",
     )
 
     # Gap Analysis and Strategy
     parser.add_argument(
         "--analyze-gaps",
         action="store_true",
-        help="Perform gap analysis without enhancement"
+        help="Perform gap analysis without enhancement",
     )
     parser.add_argument(
         "--design-strategy",
         action="store_true",
-        help="Generate unified design strategy"
+        help="Generate unified design strategy",
     )
 
     # User Interaction
     parser.add_argument(
         "--interactive",
         action="store_true",
-        help="Enable interactive enhancement review"
+        help="Enable interactive enhancement review",
     )
-    parser.add_argument(
-        "--save-session",
-        help="Save enhancement session to file"
-    )
-    parser.add_argument(
-        "--load-session",
-        help="Load previous enhancement session"
-    )
+    parser.add_argument("--save-session", help="Save enhancement session to file")
+    parser.add_argument("--load-session", help="Load previous enhancement session")
 
     # Debug and configuration
-    parser.add_argument(
-        "--debug",
-        action="store_true",
-        help="Enable debug output"
-    )
+    parser.add_argument("--debug", action="store_true", help="Enable debug output")
 
     return parser
 
 
-def create_resolved_config(dev_config: DeveloperConfig, args: argparse.Namespace) -> ResolvedConfig:
+def create_resolved_config(
+    dev_config: DeveloperConfig, args: argparse.Namespace
+) -> ResolvedConfig:
     """Create final configuration by merging developer config with CLI arguments."""
     # Start with developer config values
     config_data = {
-        'llm_provider': args.llm_provider,
-        'llm_base_url': dev_config.llm_base_url,
-        'llm_model': dev_config.llm_model,
-        'llm_api_key': dev_config.llm_api_key,
-        'default_output_dir': dev_config.default_output_dir,
-        'session_storage_dir': dev_config.session_storage_dir,
-        'cache_dir': dev_config.cache_dir,
-        'request_timeout': dev_config.request_timeout,
-        'enable_caching': dev_config.enable_caching,
-        'max_retries': dev_config.max_retries,
-        'retry_backoff_factor': dev_config.retry_backoff_factor,
-        'default_enhancement_level': args.enhancement_level,
-        'debug_mode': getattr(args, 'debug', False) or dev_config.debug_mode,
-        'log_level': dev_config.log_level,
+        "llm_provider": args.llm_provider,
+        "llm_base_url": dev_config.llm_base_url,
+        "llm_model": dev_config.llm_model,
+        "llm_api_key": dev_config.llm_api_key,
+        "default_output_dir": dev_config.default_output_dir,
+        "session_storage_dir": dev_config.session_storage_dir,
+        "cache_dir": dev_config.cache_dir,
+        "request_timeout": dev_config.request_timeout,
+        "enable_caching": dev_config.enable_caching,
+        "max_retries": dev_config.max_retries,
+        "retry_backoff_factor": dev_config.retry_backoff_factor,
+        "default_enhancement_level": args.enhancement_level,
+        "debug_mode": getattr(args, "debug", False) or dev_config.debug_mode,
+        "log_level": dev_config.log_level,
     }
 
     # Track sources for each setting
     sources = {
-        'llm_provider': 'cli' if args.llm_provider != dev_config.llm_provider else 'config',
-        'llm_base_url': 'config',
-        'llm_model': 'config',
-        'llm_api_key': 'env' if dev_config.llm_api_key else 'default',
-        'default_output_dir': 'config',
-        'session_storage_dir': 'config',
-        'cache_dir': 'config',
-        'request_timeout': 'config',
-        'enable_caching': 'config',
-        'max_retries': 'config',
-        'retry_backoff_factor': 'config',
-        'default_enhancement_level': 'cli' if args.enhancement_level != dev_config.default_enhancement_level else 'config',
-        'debug_mode': 'cli' if getattr(args, 'debug', False) else 'config',
-        'log_level': 'config',
+        "llm_provider": "cli"
+        if args.llm_provider != dev_config.llm_provider
+        else "config",
+        "llm_base_url": "config",
+        "llm_model": "config",
+        "llm_api_key": "env" if dev_config.llm_api_key else "default",
+        "default_output_dir": "config",
+        "session_storage_dir": "config",
+        "cache_dir": "config",
+        "request_timeout": "config",
+        "enable_caching": "config",
+        "max_retries": "config",
+        "retry_backoff_factor": "config",
+        "default_enhancement_level": "cli"
+        if args.enhancement_level != dev_config.default_enhancement_level
+        else "config",
+        "debug_mode": "cli" if getattr(args, "debug", False) else "config",
+        "log_level": "config",
     }
 
     # Create resolved configuration
@@ -2097,7 +2343,7 @@ def create_resolved_config(dev_config: DeveloperConfig, args: argparse.Namespace
         **config_data,
         config_source=sources,
         validation_warnings=[],
-        validation_errors=[]
+        validation_errors=[],
     )
 
     return resolved
@@ -2107,19 +2353,21 @@ def validate_configuration(config: ResolvedConfig) -> None:
     """Validate the final configuration and handle errors."""
     try:
         # Validate directories
-        dir_manager = DirectoryManager([
-            config.default_output_dir,
-            config.session_storage_dir,
-            config.cache_dir
-        ])
+        dir_manager = DirectoryManager(
+            [config.default_output_dir, config.session_storage_dir, config.cache_dir]
+        )
         dir_manager.ensure_exists()
 
         # Add any validation warnings to config
         if config.request_timeout < 5.0:
-            config.validation_warnings.append(f"Low timeout ({config.request_timeout}s) may cause failures")
+            config.validation_warnings.append(
+                f"Low timeout ({config.request_timeout}s) may cause failures"
+            )
 
         if not config.llm_api_key:
-            config.validation_warnings.append(f"No API key found for provider '{config.llm_provider}' - using mock responses")
+            config.validation_warnings.append(
+                f"No API key found for provider '{config.llm_provider}' - using mock responses"
+            )
 
     except ConfigurationError as e:
         config.validation_errors.append(str(e))
@@ -2136,7 +2384,8 @@ def validate_configuration(config: ResolvedConfig) -> None:
 # Processing Functions
 # ============================================================================
 
-def analyze_gaps_only(input_file: str) -> Dict[str, Any]:
+
+def analyze_gaps_only(input_file: str) -> dict[str, Any]:
     """Perform gap analysis without enhancement."""
     if not input_file or not Path(input_file).exists():
         raise FileNotFoundError(f"Input file not found: {input_file}")
@@ -2149,19 +2398,15 @@ def analyze_gaps_only(input_file: str) -> Dict[str, Any]:
 
     # Perform gap analysis
     request = LLMRequest(
-        prompt_type="gap_analysis",
-        context=content,
-        enhancement_level="moderate"
+        prompt_type="gap_analysis", context=content, enhancement_level="moderate"
     )
 
     response = engine.process_request(request)
 
-    return {
-        "gap_analysis": response.content
-    }
+    return {"gap_analysis": response.content}
 
 
-def process_with_enhancement(args, config: ResolvedConfig) -> Dict[str, Any]:
+def process_with_enhancement(args, config: ResolvedConfig) -> dict[str, Any]:
     """Process brand identity with LLM enhancement."""
     if not args.input_file or not Path(args.input_file).exists():
         raise FileNotFoundError(f"Input file not found: {args.input_file}")
@@ -2175,7 +2420,7 @@ def process_with_enhancement(args, config: ResolvedConfig) -> Dict[str, Any]:
         model=config.llm_model,
         enable_caching=config.enable_caching,
         timeout=config.request_timeout,
-        base_url=config.llm_base_url
+        base_url=config.llm_base_url,
     )
 
     # Perform enhancement
@@ -2186,7 +2431,7 @@ def process_with_enhancement(args, config: ResolvedConfig) -> Dict[str, Any]:
     color_request = LLMRequest(
         prompt_type="color_generation",
         context=content,
-        enhancement_level=args.enhancement_level
+        enhancement_level=args.enhancement_level,
     )
     color_response = engine.process_request(color_request)
 
@@ -2196,12 +2441,18 @@ def process_with_enhancement(args, config: ResolvedConfig) -> Dict[str, Any]:
         try:
             # Create font selection criteria from brand context
             criteria = FontSelectionCriteria(
-                brand_personality=content.get("personality_indicators", ["professional"]),
-                target_audience=content.get("audience_descriptors", ["users"])[0] if content.get("audience_descriptors") else "users",
-                brand_voice=", ".join(content.get("personality_indicators", ["professional"])[:3]),
+                brand_personality=content.get(
+                    "personality_indicators", ["professional"]
+                ),
+                target_audience=content.get("audience_descriptors", ["users"])[0]
+                if content.get("audience_descriptors")
+                else "users",
+                brand_voice=", ".join(
+                    content.get("personality_indicators", ["professional"])[:3]
+                ),
                 enhancement_level=args.enhancement_level,
                 existing_colors=content.get("colors", []),
-                industry_context=content.get("industry_context")
+                industry_context=content.get("industry_context"),
             )
 
             # Select fonts
@@ -2209,8 +2460,14 @@ def process_with_enhancement(args, config: ResolvedConfig) -> Dict[str, Any]:
             typography_response = font_selection  # Keep the full FontSelectionResponse
 
             if args.debug:
-                print(f"Font selection completed in {font_selection.selection_metadata.processing_time:.2f}s", file=sys.stderr)
-                print(f"Selected font: {font_selection.typography.primary_font.google_font.family} (confidence: {font_selection.typography.primary_font.confidence_score:.2f})", file=sys.stderr)
+                print(
+                    f"Font selection completed in {font_selection.selection_metadata.processing_time:.2f}s",
+                    file=sys.stderr,
+                )
+                print(
+                    f"Selected font: {font_selection.typography.primary_font.google_font.family} (confidence: {font_selection.typography.primary_font.confidence_score:.2f})",
+                    file=sys.stderr,
+                )
 
         except Exception as e:
             if args.debug:
@@ -2224,7 +2481,7 @@ def process_with_enhancement(args, config: ResolvedConfig) -> Dict[str, Any]:
         strategy_request = LLMRequest(
             prompt_type="design_strategy",
             context=content,
-            enhancement_level=args.enhancement_level
+            enhancement_level=args.enhancement_level,
         )
         strategy_response = engine.process_request(strategy_request)
         design_strategy = strategy_response.content
@@ -2242,8 +2499,10 @@ def process_with_enhancement(args, config: ResolvedConfig) -> Dict[str, Any]:
                 content={"primary": color_response.content["primary"]},
                 confidence_score=color_response.confidence_score,
                 rationale="Primary color enhancement",
-                alternatives=color_response.alternatives[:2] if color_response.alternatives else [],
-                processing_time=color_response.processing_time
+                alternatives=color_response.alternatives[:2]
+                if color_response.alternatives
+                else [],
+                processing_time=color_response.processing_time,
             )
             user_feedback_count += handle_interactive_enhancement(primary_response)
 
@@ -2253,8 +2512,10 @@ def process_with_enhancement(args, config: ResolvedConfig) -> Dict[str, Any]:
                 content={"secondary": color_response.content["secondary"]},
                 confidence_score=color_response.confidence_score,
                 rationale="Secondary color enhancement",
-                alternatives=color_response.alternatives[2:] if len(color_response.alternatives) > 2 else [],
-                processing_time=color_response.processing_time
+                alternatives=color_response.alternatives[2:]
+                if len(color_response.alternatives) > 2
+                else [],
+                processing_time=color_response.processing_time,
             )
             user_feedback_count += handle_interactive_enhancement(secondary_response)
 
@@ -2264,22 +2525,26 @@ def process_with_enhancement(args, config: ResolvedConfig) -> Dict[str, Any]:
         enhanced_color_palette["primary"] = {
             **color_response.content["primary"],
             "enhancement_metadata": {
-                "original_description": content.get("colors", ["blue"])[0] if content.get("colors") else "blue",
+                "original_description": content.get("colors", ["blue"])[0]
+                if content.get("colors")
+                else "blue",
                 "confidence_score": color_response.confidence_score,
                 "rationale": color_response.rationale,
-                "accessibility_score": 0.85  # Mock accessibility score
-            }
+                "accessibility_score": 0.85,  # Mock accessibility score
+            },
         }
 
     if "secondary" in color_response.content:
         enhanced_color_palette["secondary"] = {
             **color_response.content["secondary"],
             "enhancement_metadata": {
-                "original_description": content.get("colors", ["orange"])[1] if len(content.get("colors", [])) > 1 else "orange",
+                "original_description": content.get("colors", ["orange"])[1]
+                if len(content.get("colors", [])) > 1
+                else "orange",
                 "confidence_score": color_response.confidence_score,
                 "rationale": color_response.rationale,
-                "accessibility_score": 0.85  # Mock accessibility score
-            }
+                "accessibility_score": 0.85,  # Mock accessibility score
+            },
         }
 
     # Track which gaps were filled
@@ -2294,42 +2559,58 @@ def process_with_enhancement(args, config: ResolvedConfig) -> Dict[str, Any]:
             "gaps_filled": gaps_filled,
             "processing_time": total_time,
             "llm_provider": args.llm_provider,
-            "user_feedback_count": user_feedback_count
-        }
+            "user_feedback_count": user_feedback_count,
+        },
     }
 
     # Add typography if font selection was successful
     if typography_response:
         result["typography"] = {
-            "primary_font": typography_response.typography.primary_font.model_dump() if typography_response.typography.primary_font else None,
-            "secondary_font": typography_response.typography.secondary_font.model_dump() if typography_response.typography.secondary_font else None,
-            "accent_font": typography_response.typography.accent_font.model_dump() if typography_response.typography.accent_font else None,
-            "heading_styles": {k: v.model_dump() for k, v in typography_response.typography.heading_styles.items()},
-            "text_styles": {k: v.model_dump() for k, v in typography_response.typography.text_styles.items()},
+            "primary_font": typography_response.typography.primary_font.model_dump()
+            if typography_response.typography.primary_font
+            else None,
+            "secondary_font": typography_response.typography.secondary_font.model_dump()
+            if typography_response.typography.secondary_font
+            else None,
+            "accent_font": typography_response.typography.accent_font.model_dump()
+            if typography_response.typography.accent_font
+            else None,
+            "heading_styles": {
+                k: v.model_dump()
+                for k, v in typography_response.typography.heading_styles.items()
+            },
+            "text_styles": {
+                k: v.model_dump()
+                for k, v in typography_response.typography.text_styles.items()
+            },
             "css_snippet": typography_response.typography.css_snippet,
-            "font_urls": typography_response.typography.font_urls
+            "font_urls": typography_response.typography.font_urls,
         }
         gaps_filled.append("typography")
 
         # Add typography metadata to enhancement metadata
         result["enhancement_metadata"]["typography_enhancement"] = True
-        result["enhancement_metadata"]["typography_method"] = typography_response.selection_metadata.selection_method
-        result["enhancement_metadata"]["font_selection_time"] = typography_response.selection_metadata.processing_time
+        result["enhancement_metadata"][
+            "typography_method"
+        ] = typography_response.selection_metadata.selection_method
+        result["enhancement_metadata"][
+            "font_selection_time"
+        ] = typography_response.selection_metadata.processing_time
 
     if design_strategy:
         result["designStrategy"] = design_strategy
 
     # Save session if requested using configured directory
     if args.save_session:
-        session_path = args.save_session
-        if not Path(session_path).is_absolute():
-            session_path = Path(config.session_storage_dir) / session_path
+        session_path = Path(args.save_session)
+        if not session_path.is_absolute():
+            session_path = Path.cwd() / session_path
         save_enhancement_session(str(session_path), result, content)
 
     return result
 
 
-def process_standard(input_file: str) -> Dict[str, Any]:
+def process_standard(input_file: str) -> dict[str, Any]:
     """Standard processing without LLM enhancement."""
     if not input_file or not Path(input_file).exists():
         raise FileNotFoundError(f"Input file not found: {input_file}")
@@ -2338,38 +2619,36 @@ def process_standard(input_file: str) -> Dict[str, Any]:
 
     return {
         "brandName": content.get("brand_name", "Unknown Brand"),
-        "colorPalette": {
-            "primary": {"hex": "#0066CC", "name": "Blue"}
-        },
+        "colorPalette": {"primary": {"hex": "#0066CC", "name": "Blue"}},
         "typography": {
-            "fontFamilies": {
-                "heading": {"primary": "Arial", "fallback": "sans-serif"}
-            }
-        }
+            "fontFamilies": {"heading": {"primary": "Arial", "fallback": "sans-serif"}}
+        },
     }
 
 
-def read_brand_markdown(file_path: str) -> Dict[str, Any]:
+def read_brand_markdown(file_path: str) -> dict[str, Any]:
     """Read and parse brand markdown file."""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding="utf-8") as f:
             content = f.read()
 
         # Basic parsing - extract brand name and content sections
-        brand_data: Dict[str, Any] = {"raw_content": content}
+        brand_data: dict[str, Any] = {"raw_content": content}
 
         # Extract brand name
-        name_match = re.search(r'Brand Name:\s*(.+)', content, re.IGNORECASE)
+        name_match = re.search(r"Brand Name:\s*(.+)", content, re.IGNORECASE)
         if name_match:
             brand_data["brand_name"] = name_match.group(1).strip()
 
         # Extract colors - store as list of color descriptions
-        colors: List[str] = re.findall(r'(?:Primary|Secondary):\s*(.+)', content, re.IGNORECASE)
+        colors: list[str] = re.findall(
+            r"(?:Primary|Secondary):\s*(.+)", content, re.IGNORECASE
+        )
         if colors:
             brand_data["colors"] = colors
 
         # Extract personality traits
-        traits_match = re.search(r'Traits:\s*(.+)', content, re.IGNORECASE)
+        traits_match = re.search(r"Traits:\s*(.+)", content, re.IGNORECASE)
         if traits_match:
             brand_data["personality"] = traits_match.group(1).strip()
 
@@ -2380,7 +2659,7 @@ def read_brand_markdown(file_path: str) -> Dict[str, Any]:
         return brand_data
 
     except Exception as e:
-        raise ValueError(f"Error reading brand file: {str(e)}")
+        raise ValueError(f"Error reading brand file: {e!s}")
 
 
 def extract_typography_context_from_brand(brand_content: str) -> dict:
@@ -2396,9 +2675,10 @@ def extract_typography_context_from_brand(brand_content: str) -> dict:
     content_lower = brand_content.lower()
 
     # Check for existing typography specifications
-    has_existing_typography = any(keyword in content_lower for keyword in [
-        "font family", "typography", "typeface", "font:", "fonts:"
-    ])
+    has_existing_typography = any(
+        keyword in content_lower
+        for keyword in ["font family", "typography", "typeface", "font:", "fonts:"]
+    )
 
     existing_fonts = []
     if has_existing_typography:
@@ -2407,7 +2687,7 @@ def extract_typography_context_from_brand(brand_content: str) -> dict:
             r'font[- ]family:\s*["\']?([^"\'\n]+)["\']?',
             r'font:\s*["\']?([^"\'\n]+)["\']?',
             r'typography:\s*["\']?([^"\'\n]+)["\']?',
-            r'typeface:\s*["\']?([^"\'\n]+)["\']?'
+            r'typeface:\s*["\']?([^"\'\n]+)["\']?',
         ]
 
         for pattern in font_patterns:
@@ -2418,25 +2698,48 @@ def extract_typography_context_from_brand(brand_content: str) -> dict:
     personality_indicators = []
 
     # Brand voice extraction
-    voice_match = re.search(r'(?:brand\s+voice|voice):\s*(.+)', brand_content, re.IGNORECASE)
+    voice_match = re.search(
+        r"(?:brand\s+voice|voice):\s*(.+)", brand_content, re.IGNORECASE
+    )
     if voice_match:
         voice_text = voice_match.group(1).strip()
         # Split on common separators
-        voice_traits = re.split(r'[,;]\s*', voice_text)
-        personality_indicators.extend([trait.strip() for trait in voice_traits if trait.strip()])
+        voice_traits = re.split(r"[,;]\s*", voice_text)
+        personality_indicators.extend(
+            [trait.strip() for trait in voice_traits if trait.strip()]
+        )
 
     # Brand personality extraction
-    personality_match = re.search(r'(?:brand\s+personality|personality):\s*(.+)', brand_content, re.IGNORECASE)
+    personality_match = re.search(
+        r"(?:brand\s+personality|personality):\s*(.+)", brand_content, re.IGNORECASE
+    )
     if personality_match:
         personality_text = personality_match.group(1).strip()
-        personality_traits = re.split(r'[,;]\s*', personality_text)
-        personality_indicators.extend([trait.strip() for trait in personality_traits if trait.strip()])
+        personality_traits = re.split(r"[,;]\s*", personality_text)
+        personality_indicators.extend(
+            [trait.strip() for trait in personality_traits if trait.strip()]
+        )
 
     # Extract from general descriptive text
     descriptive_keywords = [
-        "professional", "modern", "clean", "elegant", "sophisticated", "friendly",
-        "creative", "artistic", "bold", "minimalist", "traditional", "classic",
-        "innovative", "trustworthy", "reliable", "technical", "casual", "formal"
+        "professional",
+        "modern",
+        "clean",
+        "elegant",
+        "sophisticated",
+        "friendly",
+        "creative",
+        "artistic",
+        "bold",
+        "minimalist",
+        "traditional",
+        "classic",
+        "innovative",
+        "trustworthy",
+        "reliable",
+        "technical",
+        "casual",
+        "formal",
     ]
 
     for keyword in descriptive_keywords:
@@ -2445,14 +2748,16 @@ def extract_typography_context_from_brand(brand_content: str) -> dict:
 
     # Extract audience descriptors
     audience_descriptors = []
-    audience_match = re.search(r'(?:target\s+audience|audience):\s*(.+)', brand_content, re.IGNORECASE)
+    audience_match = re.search(
+        r"(?:target\s+audience|audience):\s*(.+)", brand_content, re.IGNORECASE
+    )
     if audience_match:
         audience_text = audience_match.group(1).strip()
         audience_descriptors.append(audience_text)
 
     # Extract industry context
     industry_context = None
-    industry_match = re.search(r'industry:\s*(.+)', brand_content, re.IGNORECASE)
+    industry_match = re.search(r"industry:\s*(.+)", brand_content, re.IGNORECASE)
     if industry_match:
         industry_context = industry_match.group(1).strip()
 
@@ -2461,7 +2766,7 @@ def extract_typography_context_from_brand(brand_content: str) -> dict:
         "existing_fonts": list(set(existing_fonts)),  # Remove duplicates
         "personality_indicators": list(set(personality_indicators)),
         "audience_descriptors": audience_descriptors,
-        "industry_context": industry_context
+        "industry_context": industry_context,
     }
 
 
@@ -2481,16 +2786,16 @@ def handle_interactive_enhancement(response: LLMResponse) -> int:
         choice = input().upper().strip()
         feedback_count += 1
 
-        if choice == 'A':
+        if choice == "A":
             print("Suggestion accepted.", file=sys.stderr)
-        elif choice == 'M':
+        elif choice == "M":
             print("What would you like to modify? ", file=sys.stderr, end="")
             modification = input()
             print(f"Noted: {modification}", file=sys.stderr)
             feedback_count += 1
-        elif choice == 'R':
+        elif choice == "R":
             print("Suggestion rejected.", file=sys.stderr)
-        elif choice == 'S':
+        elif choice == "S":
             if response.alternatives:
                 print("Alternatives:", file=sys.stderr)
                 for i, alt in enumerate(response.alternatives):
@@ -2508,8 +2813,9 @@ def handle_interactive_enhancement(response: LLMResponse) -> int:
     return feedback_count
 
 
-def save_enhancement_session(file_path: str, result: Dict[str, Any],
-                           original_input: Dict[str, Any]) -> None:
+def save_enhancement_session(
+    file_path: str, result: dict[str, Any], original_input: dict[str, Any]
+) -> None:
     """Save enhancement session for later review."""
     session_data = {
         "session_id": f"sess_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
@@ -2520,20 +2826,16 @@ def save_enhancement_session(file_path: str, result: Dict[str, Any],
         "session_metadata": {
             "enhancement_level": result["enhancement_metadata"]["enhancement_level"],
             "llm_provider": result["enhancement_metadata"]["llm_provider"],
-            "steps_completed": ["gap_analysis", "color_enhancement"]
-        }
+            "steps_completed": ["gap_analysis", "color_enhancement"],
+        },
     }
 
     try:
-        # Use configured directory if relative path provided
         output_path = Path(file_path)
-        if not output_path.is_absolute() and 'RESOLVED_CONFIG' in globals() and RESOLVED_CONFIG is not None:
-            output_path = Path(RESOLVED_CONFIG.session_storage_dir) / file_path
-
         # Ensure directory exists
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
-        with open(output_path, 'w') as f:
+        with open(output_path, "w") as f:
             json.dump(session_data, f, indent=2)
         print(f"Session saved to {output_path}", file=sys.stderr)
     except Exception as e:
@@ -2543,6 +2845,7 @@ def save_enhancement_session(file_path: str, result: Dict[str, Any],
 # ============================================================================
 # Main Entry Point
 # ============================================================================
+
 
 def main():
     """Main entry point for the brand identity generator."""
@@ -2565,7 +2868,10 @@ def main():
         # Performance check
         if config_load_time > 0.01:  # 10ms threshold
             if resolved_config.debug_mode:
-                print(f"WARNING: Configuration loading took {config_load_time*1000:.1f}ms", file=sys.stderr)
+                print(
+                    f"WARNING: Configuration loading took {config_load_time*1000:.1f}ms",
+                    file=sys.stderr,
+                )
 
         # Store resolved config globally for use by other functions
         global RESOLVED_CONFIG
@@ -2582,12 +2888,21 @@ def main():
             raise ConfigurationError(f"Directory validation failed: {e}")
 
         if args.load_session:
-            # Load and process session
-            session_file = args.load_session
-            if not Path(session_file).is_absolute():
-                session_file = Path(resolved_config.session_storage_dir) / session_file
-            print(f"Loading session from {session_file}", file=sys.stderr)
-            # TODO: Implement session loading with configured directory
+            # Load previously saved session and emit stored result JSON
+            session_file = Path(args.load_session)
+            if not session_file.is_absolute():
+                session_file = Path.cwd() / session_file
+            if not session_file.exists():
+                raise FileNotFoundError(f"Session file not found: {session_file}")
+
+            with open(session_file, encoding="utf-8") as f:
+                session_payload = json.load(f)
+
+            result_payload = session_payload.get("result")
+            if result_payload is None:
+                raise ValueError("Session file missing 'result' payload")
+
+            print(json.dumps(result_payload, indent=2))
             return
 
         if args.analyze_gaps:
@@ -2606,7 +2921,7 @@ def main():
             # Ensure output directory exists
             output_path.parent.mkdir(parents=True, exist_ok=True)
 
-            with open(output_path, 'w') as f:
+            with open(output_path, "w") as f:
                 json.dump(result, f, indent=2)
         else:
             print(json.dumps(result, indent=2))
