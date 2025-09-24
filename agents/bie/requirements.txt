@@ -1,0 +1,4 @@
+pydantic>=2.0.0
+pydantic-ai>=0.0.1
+pytest>=7.0.0
+hypothesis>=6.0.0

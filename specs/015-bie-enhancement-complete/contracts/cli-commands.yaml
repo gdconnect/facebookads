@@ -1,0 +1,236 @@
+# CLI Command Contracts: BIE Enhancement
+
+## Enhanced Evaluate Command
+**Command**: `python bie.py evaluate <file> --output [json|markdown|both]`
+
+**Input Contract**:
+```yaml
+parameters:
+  file:
+    type: Path
+    required: true
+    description: Markdown file containing business idea
+  output:
+    type: string
+    enum: [json, markdown, both]
+    default: json
+    description: Output format selection
+  model:
+    type: string
+    required: false
+    description: Override default LLM model
+  verbose:
+    type: boolean
+    default: false
+    description: Enable verbose logging
+```
+
+**Output Contract**:
+```yaml
+# For --output json
+json_output:
+  type: object
+  schema: Envelope[EvaluatedIdea]
+
+# For --output markdown
+markdown_output:
+  type: string
+  format: |
+    # [Idea Name] - Grade: [Grade] ([Score]/100)
+
+    ## 📊 Summary Scores
+    - **Scalability**: [score]/100 [indicator]
+    - **Complexity**: [score]/100 [indicator] (lower is better)
+    - **Risk**: [score]/100 [indicator] (lower is better)
+
+    ## 💡 Your Original Idea
+    [Original idea content preserved]
+
+    ## 🎯 Refined Business Model
+    [Business model analysis]
+
+    ## ❗ Critical Questions (Answer Before Proceeding)
+    [3 critical questions]
+
+    ## 🚨 Red Flags
+    [3 red flags with warnings]
+
+    ## ✅ Quick Wins
+    - [ ] [actionable checkbox items]
+
+    ## 🚀 Recommended MVP (30 days)
+    [MVP recommendation]
+
+    ## 📈 Similar Success: [Example]
+    [Success story]
+
+    ## 🔄 Next Iteration Prompts
+    [3 next steps for refinement]
+
+# For --output both
+both_output:
+  sequence:
+    - json_section: "=== JSON OUTPUT ==="
+    - json_content: Envelope[EvaluatedIdea]
+    - markdown_section: "\n=== MARKDOWN OUTPUT ==="
+    - markdown_content: [enhanced markdown format]
+```
+
+**Error Contract**:
+```yaml
+error_responses:
+  file_not_found:
+    type: Envelope[null]
+    error:
+      type: "file_error"
+      message: "File not found: {path}"
+      recoverable: true
+
+  validation_error:
+    type: Envelope[null]
+    error:
+      type: "validation_error"
+      message: "1 validation error for {model}"
+      recoverable: true
+
+  markdown_generation_error:
+    output: "Error generating markdown output"
+    fallback: Envelope[EvaluatedIdea] as JSON
+```
+
+## Compare Command
+**Command**: `python bie.py compare <file1> <file2> ... [fileN] --output [json|markdown]`
+
+**Input Contract**:
+```yaml
+parameters:
+  files:
+    type: List[Path]
+    min_items: 2
+    max_items: 10
+    required: true
+    description: Markdown files to compare (2-10 files)
+  output:
+    type: string
+    enum: [json, markdown]
+    default: json
+    description: Output format for comparison results
+```
+
+**Output Contract**:
+```yaml
+# For --output json
+json_output:
+  type: object
+  schema: ComparisonResult
+  fields:
+    ideas: List[EvaluatedIdea]
+    ranking: List[RankingEntry]
+    recommendation: string
+    comparison_summary: string
+
+# For --output markdown
+markdown_output:
+  type: string
+  format: |
+    # Business Idea Comparison
+
+    ## Summary
+    [Comparison summary with grade distribution]
+
+    ## Ranking
+
+    | Rank | Idea | Grade | Total Score | Scalability | Complexity | Risk |
+    |------|------|-------|-------------|-------------|------------|------|
+    | [rank data for each idea]
+
+    ## Recommendation
+    [Which idea to pursue and why]
+```
+
+**Error Contract**:
+```yaml
+error_responses:
+  invalid_file_count:
+    message: "Can only compare 2-10 business ideas"
+    type: ValueError
+
+  insufficient_valid_ideas:
+    message: "Need at least 2 successfully evaluated ideas for comparison"
+    type: ValueError
+
+  file_evaluation_errors:
+    behavior: Log errors, continue with remaining files
+    minimum_requirement: 2 successful evaluations
+```
+
+## Validate Command
+**Command**: `python bie.py validate <file>`
+
+**Input Contract**:
+```yaml
+parameters:
+  file:
+    type: Path
+    required: true
+    description: Markdown file to validate parsing
+```
+
+**Output Contract**:
+```yaml
+valid_response:
+  type: object
+  schema:
+    status: "valid"
+    idea_name: string
+
+invalid_response:
+  type: object
+  schema:
+    status: "invalid"
+    error: string
+```
+
+## Selfcheck Command
+**Command**: `python bie.py selfcheck`
+
+**Output Contract**:
+```yaml
+success_response:
+  type: object
+  schema:
+    status: "ok"
+    version: "1.0.0"
+```
+
+## Print-Schemas Command
+**Command**: `python bie.py print-schemas`
+
+**Output Contract**:
+```yaml
+schema_output:
+  type: object
+  schemas:
+    RawIdea: JSONSchema
+    EvaluatedIdea: JSONSchema
+    ComparisonResult: JSONSchema  # New schema added
+    Envelope: JSONSchema
+```
+
+## Global CLI Behavior
+
+**Exit Codes**:
+- 0: Success
+- 1: General error (file not found, validation error)
+- 2: Command line argument error
+
+**Logging Contract**:
+- All structured logs to STDERR (JSONL format per Article XVIII)
+- Human-readable output to STDOUT
+- Log events: agent_run, agent_run_complete, validation_error
+
+**Backwards Compatibility**:
+- All existing commands maintain identical behavior
+- New functionality only accessible via explicit flags
+- JSON output schema unchanged for evaluate command
+- Error messages and exit codes preserved
