@@ -1,8 +1,8 @@
 
-# Implementation Plan: BIE Enhancement - Complete Implementation
+# Implementation Plan: Business Idea Evaluator (BIE)
 
-**Branch**: `015-bie-enhancement-complete` | **Date**: 2025-09-24 | **Spec**: [spec.md](spec.md)
-**Input**: Feature specification from `/var/www/html/facebookads/specs/015-bie-enhancement-complete/spec.md`
+**Branch**: `014-business-idea-evaluator` | **Date**: 2025-09-24 | **Spec**: [spec.md](./spec.md)
+**Input**: Feature specification from `/specs/014-business-idea-evaluator/spec.md`
 
 ## Execution Flow (/plan command scope)
 ```
@@ -31,50 +31,34 @@
 - Phase 3-4: Implementation execution (manual or via tools)
 
 ## Summary
-Complete the BIE (Business Idea Evaluator) implementation by adding enhanced markdown output with emoji sections, completing blindspot detection patterns, and implementing the compare command functionality. The enhancement maintains single-file architecture and constitutional compliance while adding user-friendly formatting and multi-idea comparison capabilities.
+Single-file Python CLI tool that transforms unstructured business ideas written in Markdown into structured, evaluated, and actionable insights. Uses multi-pass LLM evaluation through PydanticAI to analyze business model viability, scalability potential, and risk factors, outputting comprehensive scoring and recommendations in JSON or enhanced markdown format. Designed specifically for web development agencies to evaluate digital asset opportunities before committing development resources.
 
 ## Technical Context
-**Language/Version**: Python 3.10+ (existing BIE implementation)
-**Primary Dependencies**: Pydantic v2, argparse, pathlib, json, hashlib, uuid (constitutional compliance)
-**Storage**: File-based (markdown input, JSON/markdown output)
-**Testing**: pytest (existing test framework in agents/bie/tests/)
-**Target Platform**: Linux CLI environment (existing deployment)
-**Project Type**: single (single-file Python agent per constitution)
-**Performance Goals**: <2 minutes end-to-end evaluation, <50MB memory footprint
-**Constraints**: Single-file architecture, constitutional compliance, backwards compatibility
-**Scale/Scope**: Individual developer tool, ~1000 lines of code, CLI interface
+**Language/Version**: Python 3.10+ (per PRD requirement for modern type hints)
+**Primary Dependencies**: pydantic>=2, pydantic-ai (LLM integration), argparse, pathlib (constitutional compliance)
+**Storage**: File-based I/O (markdown input, JSON/markdown output) - no database required
+**Testing**: pytest with contract, integration, and golden tests per constitution
+**Target Platform**: Cross-platform CLI (Linux, macOS, Windows)
+**Project Type**: single (command-line tool in one Python file per constitution)
+**Performance Goals**: <2 minutes end-to-end evaluation, <120 seconds timeout per LLM call
+**Constraints**: Single file <1000 lines, token budget management, LLM API rate limits
+**Scale/Scope**: Single user CLI tool, processes individual markdown files, supports comparison of multiple ideas
 
 ## Constitution Check
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-**Article I - Single-File Architecture**: ✅ PASS
-- Enhancement maintains existing agents/bie/bie.py single-file structure
-- No new files required, only modifications to existing implementation
+**Constitutional Compliance Assessment**:
+✅ **Article I**: Single-file Python program with clear CLI entrypoint - COMPLIANT
+✅ **Article II**: Contract-first with Pydantic v2 models (MetaModel, InputModel, OutputModel, ErrorModel, Envelope) - COMPLIANT
+✅ **Article III**: Decision tables for business logic before LLM calls - COMPLIANT (scoring algorithms, blindspot detection)
+✅ **Article V**: Hierarchical configuration with CLI flags (--config, --model, --output, --verbose) - COMPLIANT
+✅ **Article X**: Model disabled by default, PydanticAI integration with budgets and fallbacks - COMPLIANT
+✅ **Article XI**: Provider abstraction via PydanticAI for OpenAI/Anthropic/etc - COMPLIANT
+✅ **Article XII**: Performance budgets declared (<2min runtime, token limits, max retries) - COMPLIANT
+✅ **Article XVII**: Code quality gates (ruff, black, mypy --strict, pylint ≥9.5) - COMPLIANT
+✅ **Article XVIII**: Structured JSONL logging to STDERR - COMPLIANT
 
-**Article II - Contract-First (Pydantic v2)**: ✅ PASS
-- Uses existing Pydantic v2 models (EvaluatedIdea, Envelope, etc.)
-- New ComparisonResult model follows same Pydantic v2 patterns
-- Schema extraction already established
-
-**Article V - Configuration**: ✅ PASS
-- Enhancement uses existing ConfigModel with env bindings
-- CLI flags already established (--output, --model, --verbose)
-- No new configuration needed
-
-**Article X - Model Policy**: ✅ PASS
-- Enhancement is deterministic (markdown formatting, comparison logic)
-- No new LLM calls required beyond existing blindspot detection
-- Model disabled by default maintained
-
-**Article VII - Type Safety**: ✅ PASS
-- All new methods will include full type hints
-- Defensive programming patterns maintained
-- mypy --strict compliance preserved
-
-**Article VIII - Testing**: ✅ PASS
-- Existing test structure in agents/bie/tests/ maintained
-- Contract tests for new functionality will be added
-- Coverage ≥80% requirement maintained
+**Gate Status**: PASS - No constitutional violations identified
 
 ## Project Structure
 
@@ -126,7 +110,7 @@ ios/ or android/
 └── [platform-specific structure]
 ```
 
-**Structure Decision**: Single-file agent structure per Article I of Constitution - agents/bie/bie.py contains all implementation
+**Structure Decision**: Option 1 (Single project) - Constitutional mandate for single-file agent in agents/bie/ folder
 
 ## Phase 0: Outline & Research
 1. **Extract unknowns from Technical Context** above:
@@ -186,43 +170,26 @@ ios/ or android/
 
 **Task Generation Strategy**:
 - Load `.specify/templates/tasks-template.md` as base
-- Generate tasks from Phase 1 design docs (CLI contracts, data model, quickstart scenarios)
-- Each CLI command enhancement → contract test task [P]
-- Each new entity (ComparisonResult, enhanced BlindspotRule) → model creation task [P]
-- Each quickstart scenario → integration test task [P]
-- Implementation tasks to make tests pass within single-file architecture
-
-**BIE-Specific Task Categories**:
-1. **Setup & Validation**: Verify existing implementation, identify gaps
-2. **Test-First Development**: Contract tests for CLI commands, integration tests for scenarios
-3. **Core Enhancement Implementation**:
-   - Enhanced markdown output (emoji sections, visual indicators, checkboxes)
-   - Blindspot detection completion (monetization, perfectionism patterns)
-   - Compare command implementation (ranking, analysis, recommendation)
-4. **CLI Integration**: Output format handling, argument parsing, error handling
-5. **Polish & Validation**: Performance testing, backwards compatibility verification
+- Generate tasks from Phase 1 design docs (contracts, data model, quickstart)
+- Each contract → contract test task [P]
+- Each entity → model creation task [P] 
+- Each user story → integration test task
+- Implementation tasks to make tests pass
 
 **Ordering Strategy**:
-- TDD order: Tests before implementation (constitutional requirement)
-- Single-file constraints: All tasks modify agents/bie/bie.py sequentially
-- Logical grouping: Markdown → Blindspot → Compare → CLI integration
-- Validation tasks run in parallel [P] where they test different functionality
+- TDD order: Tests before implementation 
+- Dependency order: Models before services before UI
+- Mark [P] for parallel execution (independent files)
 
-**Constitutional Considerations**:
-- All implementation tasks target single file (agents/bie/bie.py)
-- No parallel [P] implementation tasks (same file modification conflict)
-- Test tasks can be parallel [P] (different test files)
-- Setup and validation tasks can be parallel [P] (read-only operations)
-
-**Estimated Output**: 30-35 numbered, ordered tasks in tasks.md
+**Estimated Output**: 25-30 numbered, ordered tasks in tasks.md
 
 **IMPORTANT**: This phase is executed by the /tasks command, NOT by /plan
 
 ## Phase 3+: Future Implementation
 *These phases are beyond the scope of the /plan command*
 
-**Phase 3**: Task execution (/tasks command creates tasks.md)
-**Phase 4**: Implementation (execute tasks.md following constitutional principles)
+**Phase 3**: Task execution (/tasks command creates tasks.md)  
+**Phase 4**: Implementation (execute tasks.md following constitutional principles)  
 **Phase 5**: Validation (run tests, execute quickstart.md, performance validation)
 
 ## Complexity Tracking
@@ -238,25 +205,18 @@ ios/ or android/
 *This checklist is updated during execution flow*
 
 **Phase Status**:
-- [x] Phase 0: Research complete (/plan command) ✅
-- [x] Phase 1: Design complete (/plan command) ✅
-- [x] Phase 2: Task planning complete (/plan command - describe approach only) ✅
+- [x] Phase 0: Research complete (/plan command)
+- [x] Phase 1: Design complete (/plan command)
+- [x] Phase 2: Task planning complete (/plan command - describe approach only)
 - [ ] Phase 3: Tasks generated (/tasks command)
 - [ ] Phase 4: Implementation complete
 - [ ] Phase 5: Validation passed
 
 **Gate Status**:
-- [x] Initial Constitution Check: PASS ✅
-- [x] Post-Design Constitution Check: PASS ✅
-- [x] All NEEDS CLARIFICATION resolved ✅
-- [x] Complexity deviations documented (N/A - no violations) ✅
-
-**Artifacts Generated**:
-- [x] `/var/www/html/facebookads/specs/015-bie-enhancement-complete/research.md` ✅
-- [x] `/var/www/html/facebookads/specs/015-bie-enhancement-complete/data-model.md` ✅
-- [x] `/var/www/html/facebookads/specs/015-bie-enhancement-complete/contracts/cli-commands.yaml` ✅
-- [x] `/var/www/html/facebookads/specs/015-bie-enhancement-complete/quickstart.md` ✅
-- [x] Agent context updated in `/var/www/html/facebookads/CLAUDE.md` ✅
+- [x] Initial Constitution Check: PASS
+- [x] Post-Design Constitution Check: PASS
+- [x] All NEEDS CLARIFICATION resolved
+- [x] Complexity deviations documented (none required)
 
 ---
 *Based on Constitution v2.1.1 - See `/memory/constitution.md`*

@@ -1,0 +1,22 @@
+# PRD Enhancer Agent Dependencies
+# Constitutional requirements: minimal dependencies, prefer stdlib
+
+# Core dependencies (required)
+pydantic>=2.0.0,<3.0.0
+pydantic-ai>=0.0.1
+markdown>=3.5.0
+
+# Development dependencies (for testing and quality)
+pytest>=7.0.0
+pytest-cov>=4.0.0
+pytest-mock>=3.0.0
+hypothesis>=6.0.0
+
+# Code quality tools
+ruff>=0.1.0
+black>=23.0.0
+mypy>=1.7.0
+pylint>=3.0.0
+bandit>=1.7.0
+vulture>=2.7.0
+radon>=6.0.0

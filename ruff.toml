@@ -34,4 +34,3 @@ ignore = [
 [isort]
 known-first-party = ["customer_journey_mapper"]
 force-single-line = true
-line-length = 88

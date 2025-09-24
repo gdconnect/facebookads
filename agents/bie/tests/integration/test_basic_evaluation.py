@@ -13,15 +13,15 @@ def test_basic_evaluation():
     """Test basic idea evaluation workflow"""
     # Create test config
     config = ConfigModel(
-        model_enabled=False,  # Use deterministic evaluation
-        verbose_logging=False
+        model_enabled=False, verbose_logging=False  # Use deterministic evaluation
     )
 
     evaluator = BusinessIdeaEvaluator(config)
 
     # Create temporary markdown file
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.md', delete=False) as f:
-        f.write("""# Test Business Idea
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
+        f.write(
+            """# Test Business Idea
 
 ## Problem
 Small businesses struggle with social media management.
@@ -34,7 +34,8 @@ Small business owners with 1-50 employees.
 
 ## Revenue Model
 Monthly SaaS subscription at $29, $79, and $199 tiers.
-""")
+"""
+        )
         temp_file = Path(f.name)
 
     try:
@@ -65,7 +66,7 @@ Monthly SaaS subscription at $29, $79, and $199 tiers.
         assert 0 <= evaluated.scores.scalability_score <= 100
         assert 0 <= evaluated.scores.complexity_score <= 100
         assert 0 <= evaluated.scores.risk_score <= 100
-        assert evaluated.scores.overall_grade in ['A', 'B', 'C', 'D', 'F']
+        assert evaluated.scores.overall_grade in ["A", "B", "C", "D", "F"]
 
         # Verify insights have required items
         assert len(evaluated.insights.critical_questions) >= 3
@@ -73,7 +74,9 @@ Monthly SaaS subscription at $29, $79, and $199 tiers.
         assert len(evaluated.insights.red_flags) >= 3
         assert len(evaluated.insights.next_steps) >= 3
 
-        print(f"✅ Evaluation completed successfully with grade: {evaluated.scores.overall_grade}")
+        print(
+            f"✅ Evaluation completed successfully with grade: {evaluated.scores.overall_grade}"
+        )
 
     finally:
         # Clean up
